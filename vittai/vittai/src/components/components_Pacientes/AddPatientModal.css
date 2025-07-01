@@ -1,32 +1,179 @@
-.modal {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  max-width: 500px;
-  width: 100%;
-  outline: none;
-}
+/* Estilos Globais e Overlay */
 .overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.75);
-}
-.add-patient-form { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 1rem; 
+  background-color: rgba(0, 0, 0, 0.7); /* Fundo um pouco mais escuro para mais foco */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 }
 
-.form-group { display: flex; flex-direction: column; }
-.form-group label { margin-bottom: 0.5rem; font-weight: 500; }
-.form-group input, .form-group select { padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; }
-.form-row { display: flex; gap: 1rem; }
-.form-row .form-group { flex: 1; }
-.form-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; }
-.btn-cancel, .btn-submit { padding: 0.75rem 1.5rem; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; }
-.btn-cancel { background-color: #f1f1f1; }
-.btn-submit { background-color: var(--primary-color); color: white; }
+.modal {
+  background: #ffffff;
+  padding: 2.5rem; /* Mais espaçamento interno */
+  border-radius: 16px; /* Bordas mais arredondadas */
+  max-width: 850px;
+  width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+  outline: none;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  animation: fadeIn 0.3s ease-out; /* Animação sutil de entrada */
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Header do Modal */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e9ecef; /* Linha divisória mais suave */
+}
+
+.modal-header h2 {
+  font-size: 1.75rem; /* Título maior e mais impactante */
+  font-weight: 700;
+  color: #212529;
+}
+
+.close-btn {
+  background: #f1f3f5;
+  border: none;
+  border-radius: 50%; /* Botão de fechar circular */
+  width: 40px;
+  height: 40px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #868e96;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: #e9ecef;
+  color: #212529;
+  transform: rotate(90deg); /* Efeito divertido no hover */
+}
+
+/* Formulário */
+.add-patient-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem; /* Aumenta o espaço entre as seções */
+}
+
+.form-section h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #343a40;
+  margin-bottom: 1.5rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Grid responsivo */
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: #495057;
+}
+
+.form-group input,
+.form-group select {
+  padding: 0.875rem 1rem;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #495057;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #00A3A3; /* Cor primária */
+  box-shadow: 0 0 0 3px rgba(0, 163, 163, 0.15);
+}
+
+/* Mensagem de Erro */
+.error-message {
+    color: #e63946; /* Vermelho mais forte e visível */
+    font-size: 0.8rem;
+    margin-top: 0.4rem;
+    font-weight: 500;
+}
+
+/* Estilo específico para inputs com erro */
+input.has-error, select.has-error {
+    border-color: #e63946 !important;
+    background-color: #fff5f5;
+}
+
+/* Ações do Formulário (Botões) */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.btn-cancel,
+.btn-submit {
+  padding: 0.8rem 1.8rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.btn-cancel {
+  background-color: transparent;
+  color: #495057;
+  border: 1px solid #ced4da;
+}
+
+.btn-cancel:hover {
+  background-color: #f1f3f5;
+  border-color: #adb5bd;
+}
+
+.btn-submit {
+  background-color: #00A3A3; /* Cor primária vibrante */
+  color: white;
+}
+
+.btn-submit:hover {
+  background-color: #007A7A; /* Tom mais escuro para o hover */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 163, 163, 0.2);
+}
+
+.btn-submit:disabled {
+    background-color: #a0a0a0;
+    cursor: not-allowed;
+}
