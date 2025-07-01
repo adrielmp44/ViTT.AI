@@ -1,0 +1,68 @@
+.patient-card {
+  background-color: var(--card-bg);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-color);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.patient-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.patient-photo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.patient-summary {
+  display: flex;
+  flex-direction: column;
+}
+.patient-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text-dark);
+}
+.patient-details {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+.patient-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  font-size: 0.9rem;
+}
+.patient-info-grid span {
+  color: #6c757d;
+  font-size: 0.8rem;
+}
+.patient-info-grid p {
+  font-weight: 600;
+  color: var(--text-dark);
+}
+.edit-patient-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background-color: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.edit-patient-btn:hover {
+  background-color: var(--dark-green);
+}

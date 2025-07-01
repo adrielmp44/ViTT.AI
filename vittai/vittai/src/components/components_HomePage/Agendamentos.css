@@ -1,0 +1,44 @@
+.agendamentos-card {
+  width: 100%;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr); /* Coluna para hora + 7 dias */
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden; /* Para arredondar as bordas do grid */
+}
+
+.grid-header, .grid-time, .grid-cell {
+  padding: 0.75rem;
+  text-align: center;
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Remove a borda da última coluna */
+.calendar-grid > *:nth-child(8n) {
+  border-right: none;
+}
+
+/* Remove a borda da última linha */
+.calendar-grid > *:nth-last-child(-n+8) {
+  border-bottom: none;
+}
+
+.grid-header {
+  font-weight: 600;
+  font-size: 0.9rem;
+  background-color: #f8f9fa;
+}
+
+.grid-time {
+  font-weight: 500;
+  font-size: 0.9rem;
+  background-color: #f8f9fa;
+}
+
+.grid-cell {
+  min-height: 80px; /* Altura da célula de agendamento */
+}

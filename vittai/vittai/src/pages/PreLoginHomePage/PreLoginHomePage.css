@@ -1,0 +1,110 @@
+.pre-login-home-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--background-color); /* Fundo claro do seu tema */
+}
+
+.pre-login-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start; /* Alinha o conteúdo à esquerda */
+  padding: 3rem 5rem; /* Mais padding para o conteúdo */
+  text-align: left;
+  background-color: var(--background-color); /* Certifica que esta seção tem o fundo claro */
+}
+
+.pre-login-image {
+  flex: 1;
+  /* SUBSTITUÍDO: background-image por background-color */
+  background-color: #B2DFDB; /* Cor de fundo que você pode mudar (um verde-água claro, por exemplo) */
+  background-size: cover; /* Manter se for colocar imagem dps */
+  background-position: center; /* Manter se for colocar imagem dps */
+  background-repeat: no-repeat; /* Manter se for colocar imagem dps */
+  min-height: 300px;
+}
+
+.pre-login-title {
+  font-size: 3rem;
+  color: var(--text-dark);
+  margin-bottom: 1.5rem;
+  font-weight: 800;
+}
+
+.pre-login-description {
+  font-size: 1.2rem;
+  color: #6c757d;
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+  max-width: 600px;
+}
+
+.pre-login-actions {
+  display: flex;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 400px;
+}
+
+.pre-login-button {
+  flex: 1;
+  padding: 1rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  text-decoration: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.pre-login-button.primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.pre-login-button.primary:hover {
+  background-color: var(--dark-green);
+  transform: translateY(-2px);
+}
+
+.pre-login-button.secondary {
+  background-color: var(--border-color);
+  color: var(--text-dark);
+  border: 1px solid var(--border-color);
+}
+
+.pre-login-button.secondary:hover {
+  background-color: #e0e0e0;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 992px) {
+  .pre-login-home-container {
+    flex-direction: column;
+  }
+
+  .pre-login-content {
+    padding: 2rem;
+    text-align: center;
+    align-items: center;
+  }
+
+  .pre-login-title {
+    font-size: 2.5rem;
+  }
+
+  .pre-login-description {
+    font-size: 1rem;
+    max-width: 90%;
+  }
+
+  .pre-login-actions {
+    flex-direction: column;
+    max-width: 300px;
+  }
+}

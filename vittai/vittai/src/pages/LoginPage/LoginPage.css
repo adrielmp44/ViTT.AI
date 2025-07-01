@@ -1,0 +1,95 @@
+.login-page-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--background-color); /* Usando sua variável para o fundo principal */
+}
+
+.login-image-section {
+  flex: 1;
+  /* SUBSTITUÍDO: background-image por background-color */
+  background-color: #A0D2EB; /* Cor de fundo que você pode mudar (um azul claro, por exemplo) */
+  background-size: cover; /* Manter se for colocar imagem dps */
+  background-position: center; /* Manter se for colocar imagem dps */
+}
+
+.login-form-section {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--sidebar-bg); /* Usando sua variável para o verde escuro */
+}
+
+.login-card {
+  background-color: var(--card-bg); /* White background, from index.css */
+  border-radius: 12px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Similar to existing cards */
+  border: 1px solid var(--border-color); /* Similar to existing cards */
+  width: 400px;
+  text-align: center;
+}
+
+.login-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--text-dark); /* From index.css */
+  margin-bottom: 2rem;
+}
+
+.login-icon-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: var(--primary-color); /* Use your primary color */
+  margin: 0 auto 1.5rem auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 3rem;
+  color: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.login-input {
+  width: calc(100% - 20px); /* Adjust for padding */
+  padding: 12px 10px;
+  margin-bottom: 1.2rem;
+  border: 1px solid var(--border-color); /* From index.css */
+  border-radius: 8px;
+  font-size: 1rem;
+  color: var(--text-dark);
+}
+
+.forgot-password-link {
+  display: block;
+  text-align: right;
+  font-size: 0.9rem;
+  color: var(--primary-color); /* Use your primary color for links */
+  text-decoration: none;
+  margin-bottom: 1.5rem;
+}
+
+.login-button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  margin-bottom: 0.8rem;
+  text-decoration: none; /* For Link component */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-button.primary {
+  background-color: var(--primary-color); /* From index.css */
+  color: white;
+}
+
+.login-button.secondary {
+  background-color: var(--border-color); /* Light background for secondary button */
+  color: var(--text-dark); /* Dark text for secondary button */
+}

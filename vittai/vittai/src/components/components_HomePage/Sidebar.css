@@ -1,0 +1,105 @@
+.sidebar {
+  width: 260px;
+  background-color: var(--sidebar-bg);
+  color: var(--text-light);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1rem;
+  transition: width 0.3s ease;
+  
+  /* Adições para fixar a sidebar */
+  position: sticky; /* ou fixed se preferir que ela não role junto */
+  top: 0; /* Fixa no topo da viewport */
+  height: 100vh; /* Garante que ela ocupe a altura total da viewport */
+  overflow-y: auto; /* Adiciona rolagem interna se o conteúdo da sidebar for muito longo */
+}
+
+.sidebar-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.logo-text {
+  color: white;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.sidebar-nav {
+  flex-grow: 1;
+  /* Se tiver muitos itens de navegação, pode ser útil adicionar overflow-y: auto; aqui também */
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  padding: 0.9rem 1rem;
+  margin: 0.5rem 0;
+  border-radius: 8px;
+  color: var(--text-light);
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.nav-link:hover {
+  background-color: var(--dark-green);
+  color: white;
+}
+
+.nav-link.active {
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: 600;
+}
+
+.nav-link svg {
+  margin-right: 1rem;
+  font-size: 1.2rem;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  /* Se o footer da sidebar também precisar de rolagem (conteúdo grande), considere overflow-y: auto */
+}
+
+.settings {
+  cursor: pointer;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: 600;
+}
+
+.user-crn {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.logout-button {
+  background: none;
+  border: none;
+  color: var(--text-light);
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.logout-button:hover {
+  color: var(--primary-color);
+}

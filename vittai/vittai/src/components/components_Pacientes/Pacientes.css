@@ -1,0 +1,10 @@
+.patient-list-container { width: 100%; }
+.patient-list-header { margin-bottom: 2rem; }
+.patient-list-header h1 { font-size: 2rem; font-weight: 700; margin-bottom: 1rem; }
+.header-actions { display: flex; justify-content: space-between; align-items: center; }
+.search-bar { display: flex; align-items: center; background: var(--card-bg); padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); width: 50%; }
+.search-bar svg { color: #6c757d; margin-right: 0.5rem; }
+.search-bar input { border: none; outline: none; background: transparent; width: 100%; }
+.add-patient-btn { display: flex; align-items: center; gap: 0.5rem; background-color: var(--primary-color); color: white; border: none; padding: 0.85rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; }
+.add-patient-btn:hover { background-color: var(--dark-green); }
+.patient-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; }

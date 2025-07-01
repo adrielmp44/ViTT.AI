@@ -1,0 +1,22 @@
+.homepage-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* Espaçamento entre as seções */
+}
+
+.header-cards {
+  display: flex;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.main-content-grid {
+  display: flex;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.bottom-content {
+  width: 100%;
+}

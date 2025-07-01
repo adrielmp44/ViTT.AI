@@ -1,0 +1,57 @@
+.card-container {
+  background-color: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-color);
+  flex: 1.5; /* Ocupa mais espaço que os feedbacks */
+}
+
+.card-title-header {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 1.5rem;
+}
+
+.chart-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.pie-chart {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  /* conic-gradient cria o efeito de pizza */
+  background-image: conic-gradient(
+    #00A3A3 0% 25%,
+    #008080 25% 45%,
+    #0D2626 45% 65%,
+    #29B6F6 65% 80%,
+    #66BB6A 80% 90%,
+    #80CBC4 90% 100%
+  );
+}
+
+.legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem 1.5rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  margin-right: 0.5rem;
+  display: inline-block;
+}
