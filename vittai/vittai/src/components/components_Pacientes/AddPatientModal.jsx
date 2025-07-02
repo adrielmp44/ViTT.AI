@@ -6,6 +6,8 @@ import './AddPatientModal.css';
 // Geralmente, isso é feito no index.js ou App.js principal: Modal.setAppElement('#root');
 Modal.setAppElement('#root'); // Assumindo que seu elemento raiz é #root
 
+
+
 export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded }) {
     const [formData, setFormData] = useState({
         name: '', 
@@ -21,9 +23,6 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState({});
-
-    // Se o modal não estiver aberto, não renderiza nada
-    if (!isOpen) return null;
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
