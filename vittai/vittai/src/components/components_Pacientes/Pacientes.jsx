@@ -4,19 +4,11 @@ import PatientCard from './PatientCard.jsx';
 import AddPatientModal from './AddPatientModal.jsx';
 import './Pacientes.css';
 
-
-const initialPatients = [
-  { id: 1, name: 'Jacinto Pinto de Sousa', photoURL: 'https://i.pravatar.cc/80?img=1', age: '55', gender: 'Masculino', weight: '125', lastConsult: '15/05/2025', objective: 'Perca de Gordura' },
-  { id: 2, name: 'Clodovaldo Lima', photoURL: 'https://i.pravatar.cc/80?img=2', age: '39', gender: 'Masculino', weight: '75', lastConsult: '15/12/2025', objective: 'Hipertrofia Muscular' }
-];
-
-export default function PacientesPage() {
-  const [patients, setPatients] = useState(initialPatients);
+// Remova o 'initialPatients' daqui e receba 'patients' e 'onPatientAdded' via props
+export default function PacientesPage({ patients, onPatientAdded }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleAddPatient = (newPatient) => {
-    setPatients(prevPatients => [newPatient, ...prevPatients]);
-  };
+  // Remova o useState para 'patients' e a função 'handleAddPatient' daqui
 
   return (
     <div className="patient-list-container">
@@ -43,7 +35,7 @@ export default function PacientesPage() {
       <AddPatientModal
         isOpen={isModalOpen}
         onRequestClose={() => setIsModalOpen(false)}
-        onPatientAdded={handleAddPatient} 
+        onPatientAdded={onPatientAdded} // Passe a função recebida por props
       />
     </div>
   );

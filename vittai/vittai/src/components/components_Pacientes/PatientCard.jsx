@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { FaPencilAlt } from 'react-icons/fa';
 import './PatientCard.css';
 
@@ -26,9 +27,9 @@ export default function PatientCard({ patient }) {
           <p>{patient.objective || 'N/A'}</p>
         </div>
       </div>
-      <button className="edit-patient-btn">
+      <Link to={`/edit-patient/${patient.id}`} className="edit-patient-btn">
         <FaPencilAlt />
-      </button>
+      </Link>
     </div>
   );
 }
