@@ -88,13 +88,31 @@
     box-shadow: 0 0 0 3px rgba(0, 163, 163, 0.15);
 }
 
+/* NOVO: Estilo para mensagens de erro */
+.error-message {
+    color: #e63946; /* Vermelho mais forte e visível */
+    font-size: 0.8rem;
+    margin-top: 0.4rem;
+    font-weight: 500;
+}
+
+/* NOVO: Estilo específico para inputs com erro */
+.form-group input.has-error, 
+.form-group select.has-error {
+    border-color: #e63946 !important;
+    background-color: #fff5f5;
+}
+
+
 .form-actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-end; /* Alinha os botões à direita */
     gap: 1rem;
     margin-top: 2rem;
     padding-top: 1.5rem;
     border-top: 1px solid #e9ecef;
+    /* NOVO: Adiciona espaço entre o Salvar e o Excluir se o Excluir for à esquerda */
+    align-items: center; /* Alinha os itens verticalmente no centro */
 }
 
 .btn-cancel,
@@ -128,4 +146,29 @@
     background-color: var(--dark-green, #007A7A);
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(0, 163, 163, 0.2);
+}
+
+/* NOVO: Estilo para o botão de Excluir Perfil */
+.btn-delete-patient {
+    background-color: #dc3545; /* Vermelho vibrante para exclusão */
+    color: white;
+    padding: 0.8rem 1.8rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    display: flex; /* Para alinhar ícone e texto */
+    align-items: center;
+    gap: 0.5rem; /* Espaçamento entre ícone e texto */
+    margin-left: auto; /* Empurra o botão para a esquerda do grupo de botões */
+    /* Você pode ajustar o margin-left para alinhar como preferir */
+    /* Se quiser ele à esquerda de todos, pode mudar o justify-content de form-actions para space-between */
+}
+
+.btn-delete-patient:hover {
+    background-color: #c82333; /* Tom mais escuro no hover */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(rgba(220, 53, 69, 0.2));
 }

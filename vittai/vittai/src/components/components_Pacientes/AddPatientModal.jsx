@@ -7,10 +7,10 @@ Modal.setAppElement('#root');
 export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded }) {
     const [formData, setFormData] = useState({
         name: '', email: '', phone: '', birthDate: '', gender: 'Feminino',
-        height: '', currentWeight: '', objective: '', photoFile: null,
+        height: '', currentWeight: '', objective: '', photoFile: null, // photoFile será usado temporariamente
+        photoURL: '' // NOVO: Armazenará a string Base64 da imagem
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
-    // NOVO: Estado para armazenar as mensagens de erro de cada campo
     const [errors, setErrors] = useState({});
 
     if (!isOpen) return null;
@@ -21,12 +21,19 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
     };
 
     const handleFileChange = (e) => {
-        if (e.target.files[0]) {
-            setFormData(prev => ({ ...prev, photoFile: e.target.files[0] }));
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                // Quando o arquivo é lido, a URL Base64 é armazenada em photoURL
+                setFormData(prev => ({ ...prev, photoFile: file, photoURL: reader.result }));
+            };
+            reader.readAsDataURL(file); // Lê o arquivo como uma URL de dados (Base64)
+        } else {
+            setFormData(prev => ({ ...prev, photoFile: null, photoURL: '' }));
         }
     };
 
-    // NOVO: Função que valida todos os campos
     const validateForm = () => {
         const newErrors = {};
 
@@ -51,18 +58,17 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // CHAMA A VALIDAÇÃO AQUI
         const validationErrors = validateForm();
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
-            return; // Para a submissão se houver erros
+            return;
         }
 
-        // Limpa os erros se o formulário for válido
         setErrors({});
         setIsSubmitting(true);
 
-        const photoURL = formData.photoFile ? URL.createObjectURL(formData.photoFile) : '';
+        // A photoURL já contém a string Base64 ou está vazia
+        const photoURLToSave = formData.photoURL || 'https://via.placeholder.com/80'; // Usar placeholder se não houver foto
 
         const birthDate = new Date(formData.birthDate);
         const today = new Date();
@@ -73,15 +79,27 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
         }
 
         const newPatient = {
-            id: `patient-${Date.now()}`, name: formData.name, age, gender: formData.gender,
-            weight: formData.currentWeight, objective: formData.objective, photoURL,
-            lastConsult: new Date().toLocaleDateString('pt-BR'), email: formData.email,
-            phone: formData.phone, height: formData.height
+            id: `patient-${Date.now()}`, 
+            name: formData.name, 
+            age, 
+            gender: formData.gender,
+            weight: formData.currentWeight, 
+            objective: formData.objective, 
+            photoURL: photoURLToSave, // Usar a Base64 string
+            lastConsult: new Date().toLocaleDateString('pt-BR'), 
+            email: formData.email,
+            phone: formData.phone, 
+            height: formData.height
         };
 
         onPatientAdded(newPatient);
         setIsSubmitting(false);
         onRequestClose();
+        // Limpar o formulário após a submissão para a próxima abertura do modal
+        setFormData({
+            name: '', email: '', phone: '', birthDate: '', gender: 'Feminino',
+            height: '', currentWeight: '', objective: '', photoFile: null, photoURL: '',
+        });
     };
 
     return (
@@ -122,6 +140,10 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
                         <div className="form-group">
                             <label>Foto</label>
                             <input type="file" name="photoFile" accept="image/*" onChange={handleFileChange} />
+                            {/* Opcional: Visualização da imagem selecionada */}
+                            {formData.photoURL && formData.photoURL.startsWith('data:image') && (
+                                <img src={formData.photoURL} alt="Pré-visualização da foto" style={{ marginTop: '10px', maxWidth: '100px', maxHeight: '100px', borderRadius: '8px', objectFit: 'cover' }} />
+                            )}
                         </div>
                     </div>
                 </div>
