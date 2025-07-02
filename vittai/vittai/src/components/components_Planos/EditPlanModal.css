@@ -1,0 +1,544 @@
+/* Estilos Globais e Overlay (podem ser compartilhados com AddPatientModal.css) */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal.edit-plan-modal { /* Estilo específico para este modal */
+  background: #ffffff;
+  padding: 2.5rem;
+  border-radius: 16px;
+  max-width: 1000px; /* Largura maior para o editor de plano */
+  width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+  outline: none;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Header do Modal */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.modal-header h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #212529;
+}
+
+.close-btn {
+  background: #f1f3f5;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #868e96;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: #e9ecef;
+  color: #212529;
+  transform: rotate(90deg);
+}
+
+/* Formulário Geral */
+.edit-plan-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.form-section {
+  padding: 1.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background-color: var(--card-bg);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.form-section h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #343a40;
+  margin-bottom: 1.5rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: #495057;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 0.875rem 1rem;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #495057;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary-color, #00A3A3);
+  box-shadow: 0 0 0 3px rgba(0, 163, 163, 0.15);
+}
+
+input.disabled-input {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}
+
+/* Mensagens de Erro */
+.error-message {
+    color: #e63946;
+    font-size: 0.8rem;
+    margin-top: 0.4rem;
+    font-weight: 500;
+}
+
+input.has-error, select.has-error, textarea.has-error {
+    border-color: #e63946 !important;
+    background-color: #fff5f5;
+}
+
+/* Macronutrientes Section */
+.macro-calculation-section .macro-inputs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.macro-calculation-section .macro-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 2rem;
+}
+
+.calculate-macros-btn {
+    background-color: #6c757d; /* Cor neutra para o botão de cálculo */
+    color: white;
+    border: none;
+    padding: 0.75rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s;
+}
+
+.calculate-macros-btn:hover {
+    background-color: #495057;
+}
+
+.macro-distribution h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #343a40;
+    margin-bottom: 1rem;
+}
+
+.macro-distribution .distribution-content {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap; /* Para responsividade */
+}
+
+.macro-distribution .chart-container {
+    flex: 1;
+    min-width: 200px; /* Tamanho mínimo para o gráfico */
+    height: 200px;
+}
+
+.macro-distribution .distribution-list {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.macro-distribution .macro-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-size: 1rem;
+    color: #495057;
+}
+
+.macro-distribution .macro-item .macro-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.macro-distribution .macro-item p {
+    margin: 0;
+    font-weight: 500;
+    flex-grow: 1; /* Permite que o texto ocupe o espaço */
+}
+
+.macro-distribution .macro-item strong {
+    color: var(--text-dark);
+    font-size: 1.1rem;
+    min-width: 50px; /* Garante espaço para o valor */
+    text-align: right;
+}
+
+.macro-distribution .macro-item span {
+    font-size: 0.9rem;
+    color: #6c757d;
+    min-width: 40px; /* Garante espaço para a porcentagem */
+    text-align: right;
+}
+
+
+/* Totais Calculados das Refeições */
+.meal-totals-section .totals-display-wrapper {
+    /* Um wrapper para controlar o layout do display e da mensagem de diferença */
+    display: flex;
+    flex-direction: column; /* Empilhar o display e a mensagem */
+    gap: 0.5rem; /* Espaço entre o display e a mensagem */
+}
+
+.meal-totals-section .totals-display {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+    background-color: #e9f7ef; 
+    border-radius: 8px;
+    border: 1px solid var(--primary-color);
+}
+
+.meal-totals-section .totals-display div {
+    display: flex;
+    flex-direction: column; /* Para empilhar o valor e a diferença */
+    font-size: 0.9rem;
+    color: #495057;
+    align-items: center; /* Centraliza o texto */
+    text-align: center;
+}
+
+.meal-totals-section .totals-display span {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.2rem; /* Pequeno espaço entre o valor e a diferença */
+}
+
+/* NOVOS ESTILOS PARA AS MENSAGENS DE DIFERENÇA */
+.diff-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border-radius: 5px;
+    display: inline-block; /* Para que o padding e background funcionem bem */
+}
+
+.diff-negative { /* Falta para a meta (AZUL) */
+    color: #007bff; /* Azul vibrante */
+    background-color: #e0f2ff; /* Fundo azul claro */
+}
+
+.diff-positive { /* Passou da meta (VERMELHO) */
+    color: #dc3545; /* Vermelho padrão de erro */
+    background-color: #ffe0e2; /* Fundo vermelho claro */
+}
+
+.diff-zero { /* Bateu a meta (VERDE) */
+    color: #28a745; /* Verde padrão de sucesso */
+    background-color: #e2fce6; /* Fundo verde claro */
+}
+
+
+/* Refeições Section */
+.meals-section .add-meal-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 2rem; /* Espaço antes da primeira refeição */
+    transition: background-color 0.2s;
+}
+.meals-section .add-meal-btn:hover {
+    background-color: var(--dark-green);
+}
+
+.meal-block {
+    border: 1px solid #ced4da;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem; /* Espaço entre as refeições */
+    background-color: #f8f9fa; /* Fundo leve para o bloco da refeição */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+}
+
+.meal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px dashed #dee2e6;
+}
+
+.meal-header h4 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #343a40;
+    margin: 0; /* Remover margin padrão do h4 */
+    flex-grow: 1;
+}
+
+.meal-name-input {
+  border: none;
+  background: transparent;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #343a40;
+  padding: 0.2rem 0;
+  width: 100%;
+}
+.meal-name-input:focus {
+  outline: none;
+  border-bottom: 1px solid var(--primary-color);
+}
+
+
+.meal-header-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.remove-meal-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+.remove-meal-btn:hover {
+    background-color: #c82333;
+}
+
+.meal-totals-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 1rem;
+    padding: 0.8rem 0;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.meal-totals-summary span {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+.meal-totals-summary strong {
+    font-size: 1rem;
+    color: var(--primary-color);
+}
+
+/* ATUALIZADO: Layout da tabela de alimentos */
+.food-table-wrapper { /* Novo wrapper para gerenciar overflow */
+  overflow-x: auto; /* Permite rolagem horizontal se a tabela for muito larga */
+  padding-bottom: 10px; /* Espaço para a barra de rolagem */
+}
+
+.food-table-header,
+.food-item-row {
+    /* Ajuste as colunas: 
+       Alimento (2fr)
+       QTD (0.8fr)
+       UNIDADE (0.8fr)
+       CALORIAS (1fr)
+       P (G) (1fr)
+       C (G) (1fr)
+       G (G) (1fr)
+       Botão de remover (0.5fr, ou uma largura fixa pequena)
+    */
+    display: grid;
+    grid-template-columns: 2fr 0.8fr 0.8fr 1fr 1fr 1fr 1fr 40px; /* Última coluna com largura fixa para o botão */
+    gap: 0.5rem; /* Reduzir o gap para economizar espaço */
+    align-items: center;
+    min-width: 700px; /* Defina uma largura mínima para a tabela antes de ativar o overflow-x */
+}
+
+.food-table-header {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #495057;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.food-item-row {
+    margin-bottom: 0.8rem;
+}
+
+.food-item-row input,
+.food-item-row select {
+    padding: 0.5rem 0.6rem; /* Reduzir padding dos inputs para economizar espaço */
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #495057;
+    width: 100%; /* Garante que o input preencha a coluna */
+    box-sizing: border-box; /* Inclui padding e border na largura total */
+}
+/* O input de alimento pode ser menor para o nome */
+.food-item-row input[type="text"] {
+  min-width: 100px; /* Permite que o campo de alimento seja um pouco menor se necessário */
+}
+
+.remove-food-btn {
+    background-color: #ff6347; 
+    color: white;
+    border: none;
+    border-radius: 6px;
+    width: 30px; /* Largura fixa */
+    height: 30px; /* Altura fixa */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background-color 0.2s;
+    flex-shrink: 0; /* Impede que o botão encolha */
+}
+.remove-food-btn:hover {
+    background-color: #e04a2d;
+}
+
+.add-food-btn {
+    background-color: #28a745; 
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    transition: background-color 0.2s;
+}
+.add-food-btn:hover {
+    background-color: #218838;
+}
+
+.no-meals-message {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    margin-top: 2rem;
+}
+
+/* Observações Section */
+.form-section textarea {
+  width: 100%;
+  resize: vertical; /* Permite redimensionar verticalmente */
+  min-height: 80px;
+}
+
+/* Ações do Formulário (Botões Salvar/Cancelar) */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.btn-cancel,
+.btn-submit {
+  padding: 0.8rem 1.8rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.btn-cancel:hover {
+  background-color: #f1f3f5;
+  border-color: #adb5bd;
+}
+
+.btn-submit {
+  background-color: var(--primary-color, #00A3A3);
+  color: white;
+}
+
+.btn-submit:hover {
+  background-color: var(--dark-green, #007A7A);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 163, 163, 0.2);
+}
+
+.btn-submit:disabled {
+    background-color: #a0a0a0;
+    cursor: not-allowed;
+}

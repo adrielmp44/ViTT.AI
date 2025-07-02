@@ -1,17 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import './EditarPaciente.css' // Certifique-se que este CSS está no local correto
-import { FaTrashAlt } from 'react-icons/fa'; // Importar ícone de lixeira
+import './EditarPaciente.css';
+import { FaTrashAlt } from 'react-icons/fa';
 
 const getPatientById = (id, patients) => {
     return patients.find(p => p.id.toString() === id);
 };
 
-// ATUALIZADO: Adiciona onDeletePatient como prop
 export default function EditarPacientes({ patients, setPatients, onDeletePatient }) {
     const { id } = useParams();
     const navigate = useNavigate();
-    const patientData = getPatientById(id, patients);
+    const patientData = getPatientById(id, patients); 
 
     const [formData, setFormData] = useState({
         name: patientData?.name || '',
@@ -20,102 +19,196 @@ export default function EditarPacientes({ patients, setPatients, onDeletePatient
         birthDate: patientData?.birthDate || '',
         gender: patientData?.gender || 'Feminino',
         height: patientData?.height || '',
-        currentWeight: patientData?.weight || '',
+        currentWeight: patientData?.weight || '', // Inicializa com 'weight' do patientData
         objective: patientData?.objective || '',
     });
 
-    // Estado para mensagens de erro (opcional, mas bom ter para consistência)
     const [errors, setErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // useEffect para re-popular o formulário se patientData mudar
+    // Isso é importante caso a busca de pacientes em App.jsx seja assíncrona
+    useEffect(() => {
+        if (patientData) {
+            setFormData({
+                name: patientData.name || '',
+                email: patientData.email || '',
+                phone: patientData.phone || '',
+                birthDate: patientData.birthDate || '',
+                gender: patientData.gender || 'Feminino',
+                height: patientData.height || '',
+                currentWeight: patientData.weight || '', // Assegura que o peso atual é o do paciente
+                objective: patientData.objective || '',
+            });
+        }
+    }, [patientData]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // NOVO: Função de validação para a edição (similar ao AddPatientModal)
     const validateForm = () => {
         const newErrors = {};
         if (!formData.name.trim()) newErrors.name = "O nome é obrigatório.";
+        
         if (!formData.birthDate) {
             newErrors.birthDate = "A data de nascimento é obrigatória.";
-        } else if (new Date(formData.birthDate) > new Date()) {
-            newErrors.birthDate = "A data de nascimento não pode ser no futuro.";
+        } else {
+            const birth = new Date(formData.birthDate);
+            const today = new Date();
+            if (birth > today) {
+                newErrors.birthDate = "A data de nascimento não pode ser no futuro.";
+            }
         }
+        
         if (!formData.email) {
             newErrors.email = "O email é obrigatório.";
         } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
             newErrors.email = "O formato do email é inválido.";
         }
+        
         if (!formData.phone) newErrors.phone = "O telefone é obrigatório.";
-        if (!formData.height || formData.height <= 0) newErrors.height = "A altura deve ser um número positivo.";
-        if (!formData.currentWeight || formData.currentWeight <= 0) newErrors.currentWeight = "O peso deve ser um número positivo.";
+        
+        if (!formData.height || parseFloat(formData.height) <= 0) newErrors.height = "A altura deve ser um número positivo.";
+        if (!formData.currentWeight || parseFloat(formData.currentWeight) <= 0) newErrors.currentWeight = "O peso deve ser um número positivo.";
+        
         if (!formData.objective.trim()) newErrors.objective = "O objetivo é obrigatório.";
         return newErrors;
     };
 
-
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        
         const validationErrors = validateForm();
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
             return; 
         }
-        setErrors({}); // Limpa erros se a validação passar
+        setErrors({});
+        setIsSubmitting(true);
 
-        const updatedPatients = patients.map(p =>
-            p.id.toString() === id ? { ...p, ...formData, weight: formData.currentWeight } : p
-        );
-        setPatients(updatedPatients);
-        navigate('/pacientes'); // Volta para a lista de pacientes
+        // Recalcular idade baseado na nova data de nascimento
+        const birthDate = new Date(formData.birthDate);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+
+        const dataToUpdate = { 
+            ...patientData, // Mantém todos os dados existentes (incluindo photoURL, lastConsult, etc.)
+            ...formData, 
+            age: age.toString(), // ATUALIZADO: Recalcula e atribui a idade
+            weight: formData.currentWeight // ATUALIZADO: Atribui o peso atual
+        };
+        
+        // Remove 'currentWeight' do objeto final para evitar duplicação
+        delete dataToUpdate.currentWeight; 
+
+        try {
+            await setPatients(id, dataToUpdate); // setPatients é a handleUpdatePatient do App.jsx
+            navigate('/pacientes'); 
+        } catch (error) {
+            console.error("Falha ao atualizar paciente:", error);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
-    // NOVO: Função para lidar com a exclusão
-    const handleDeleteClick = () => {
-        const confirmDelete = window.confirm(`Tem certeza que deseja excluir o paciente ${patientData.name}?`);
+    const handleDeleteClick = async () => {
+        const confirmDelete = window.confirm(`Tem certeza que deseja excluir o paciente ${patientData.name}? Esta ação não pode ser desfeita.`);
         if (confirmDelete) {
-            onDeletePatient(id); // Chama a função passada via prop
-            navigate('/pacientes'); // Redireciona para a lista de pacientes após a exclusão
+            setIsSubmitting(true); 
+            try {
+                await onDeletePatient(id); // onDeletePatient é a handleDeletePatient do App.jsx
+                navigate('/pacientes'); 
+            } catch (error) {
+                console.error("Falha ao deletar paciente:", error);
+            } finally {
+                setIsSubmitting(false);
+            }
         }
     };
 
     if (!patientData) {
-        return <div>Paciente não encontrado.</div>;
+        return (
+            <div className="edit-patient-container">
+                <div className="edit-patient-header">
+                    <button onClick={() => navigate(-1)} className="back-btn" title="Voltar">&larr; Voltar</button>
+                    <h1>Paciente não encontrado.</h1>
+                </div>
+            </div>
+        );
     }
 
     return (
         <div className="edit-patient-container">
             <div className="edit-patient-header">
-                <button onClick={() => navigate(-1)} className="back-btn">&larr; Voltar</button>
+                <button onClick={() => navigate(-1)} className="back-btn" title="Voltar">&larr; Voltar</button>
                 <h1>Editar Perfil do Paciente</h1>
             </div>
-            <form onSubmit={handleSubmit} className="edit-patient-form">
+            <form onSubmit={handleSubmit} className="edit-patient-form" noValidate>
                 <div className="form-section">
                     <h3>Informações Pessoais</h3>
                     <div className="form-grid">
                         <div className="form-group">
-                            <label>Nome Completo</label>
-                            <input type="text" name="name" value={formData.name} onChange={handleInputChange} />
-                            {errors.name && <p className="error-message">{errors.name}</p>} {/* Exibe erro */}
+                            <label htmlFor="edit-name">Nome Completo</label>
+                            <input 
+                                type="text" 
+                                id="edit-name" 
+                                name="name" 
+                                value={formData.name} 
+                                onChange={handleInputChange} 
+                                className={errors.name ? 'has-error' : ''}
+                            />
+                            {errors.name && <p className="error-message">{errors.name}</p>}
                         </div>
                         <div className="form-group">
-                            <label>Data de Nascimento</label>
-                            <input type="date" name="birthDate" value={formData.birthDate} onChange={handleInputChange} />
-                            {errors.birthDate && <p className="error-message">{errors.birthDate}</p>} {/* Exibe erro */}
+                            <label htmlFor="edit-birthDate">Data de Nascimento</label>
+                            <input 
+                                type="date" 
+                                id="edit-birthDate" 
+                                name="birthDate" 
+                                value={formData.birthDate} 
+                                onChange={handleInputChange} 
+                                className={errors.birthDate ? 'has-error' : ''}
+                            />
+                            {errors.birthDate && <p className="error-message">{errors.birthDate}</p>}
                         </div>
                         <div className="form-group">
-                            <label>Email</label>
-                            <input type="email" name="email" value={formData.email} onChange={handleInputChange} />
-                            {errors.email && <p className="error-message">{errors.email}</p>} {/* Exibe erro */}
+                            <label htmlFor="edit-email">Email</label>
+                            <input 
+                                type="email" 
+                                id="edit-email" 
+                                name="email" 
+                                value={formData.email} 
+                                onChange={handleInputChange} 
+                                className={errors.email ? 'has-error' : ''}
+                            />
+                            {errors.email && <p className="error-message">{errors.email}</p>}
                         </div>
                         <div className="form-group">
-                            <label>Telefone</label>
-                            <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} />
-                            {errors.phone && <p className="error-message">{errors.phone}</p>} {/* Exibe erro */}
+                            <label htmlFor="edit-phone">Telefone</label>
+                            <input 
+                                type="tel" 
+                                id="edit-phone" 
+                                name="phone" 
+                                value={formData.phone} 
+                                onChange={handleInputChange} 
+                                className={errors.phone ? 'has-error' : ''}
+                            />
+                            {errors.phone && <p className="error-message">{errors.phone}</p>}
                         </div>
                         <div className="form-group">
-                            <label>Gênero</label>
-                            <select name="gender" value={formData.gender} onChange={handleInputChange}>
+                            <label htmlFor="edit-gender">Gênero</label>
+                            <select 
+                                id="edit-gender" 
+                                name="gender" 
+                                value={formData.gender} 
+                                onChange={handleInputChange}
+                            >
                                 <option>Feminino</option>
                                 <option>Masculino</option>
                             </select>
@@ -127,31 +220,56 @@ export default function EditarPacientes({ patients, setPatients, onDeletePatient
                     <h3>Informações Físicas e Objetivos</h3>
                     <div className="form-grid">
                         <div className="form-group">
-                            <label>Altura (cm)</label>
-                            <input type="number" name="height" value={formData.height} onChange={handleInputChange} />
-                            {errors.height && <p className="error-message">{errors.height}</p>} {/* Exibe erro */}
+                            <label htmlFor="edit-height">Altura (cm)</label>
+                            <input 
+                                type="number" 
+                                id="edit-height" 
+                                name="height" 
+                                value={formData.height} 
+                                onChange={handleInputChange} 
+                                className={errors.height ? 'has-error' : ''}
+                            />
+                            {errors.height && <p className="error-message">{errors.height}</p>}
                         </div>
                         <div className="form-group">
-                            <label>Peso Atual (kg)</label>
-                            <input type="number" name="currentWeight" step="0.1" value={formData.currentWeight} onChange={handleInputChange} />
-                            {errors.currentWeight && <p className="error-message">{errors.currentWeight}</p>} {/* Exibe erro */}
+                            <label htmlFor="edit-currentWeight">Peso Atual (kg)</label>
+                            <input 
+                                type="number" 
+                                id="edit-currentWeight" 
+                                name="currentWeight" 
+                                step="0.1" 
+                                value={formData.currentWeight} 
+                                onChange={handleInputChange} 
+                                className={errors.currentWeight ? 'has-error' : ''}
+                            />
+                            {errors.currentWeight && <p className="error-message">{errors.currentWeight}</p>}
                         </div>
                         <div className="form-group">
-                            <label>Objetivo Principal</label>
-                            <input type="text" name="objective" value={formData.objective} onChange={handleInputChange} />
-                            {errors.objective && <p className="error-message">{errors.objective}</p>} {/* Exibe erro */}
+                            <label htmlFor="edit-objective">Objetivo Principal</label>
+                            <input 
+                                type="text" 
+                                id="edit-objective" 
+                                name="objective" 
+                                value={formData.objective} 
+                                onChange={handleInputChange} 
+                                className={errors.objective ? 'has-error' : ''}
+                            />
+                            {errors.objective && <p className="error-message">{errors.objective}</p>}
                         </div>
                     </div>
                 </div>
 
                 <div className="form-actions">
-                    <button type="button" onClick={() => navigate('/pacientes')} className="btn-cancel">Cancelar</button>
-                    <button type="submit" className="btn-submit">Salvar Alterações</button>
-                    {/* NOVO: Botão de Excluir */}
+                    <button type="button" onClick={() => navigate('/pacientes')} className="btn-cancel" disabled={isSubmitting}>Cancelar</button>
+                    <button type="submit" className="btn-submit" disabled={isSubmitting}>
+                        {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
+                    </button>
                     <button 
                         type="button" 
                         onClick={handleDeleteClick} 
-                        className="btn-delete-patient" // Adicionar essa classe para estilização
+                        className="btn-delete-patient" 
+                        disabled={isSubmitting} 
+                        title={`Excluir ${patientData?.name || 'paciente'}`}
                     >
                         <FaTrashAlt /> Excluir Perfil
                     </button>

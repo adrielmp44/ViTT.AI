@@ -1,0 +1,198 @@
+.plano-detalhe-container {
+    width: 100%;
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.plano-detalhe-header {
+    display: flex;
+    flex-direction: column; /* Manter em coluna para empilhar */
+    align-items: flex-start; /* Alinhar itens à esquerda */
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.plano-detalhe-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #212529;
+    margin-bottom: 0.5rem;
+    /* Adicionado: Para evitar que o título quebre o layout */
+    word-break: break-word; /* Quebra palavras longas */
+    line-height: 1.2; /* Ajusta o espaçamento entre linhas se quebrar */
+}
+
+.plano-detalhe-header .patient-summary-detail {
+    font-size: 1rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+/* Ajuste para o botão "Voltar para Planos" */
+.plano-detalhe-header .back-btn {
+    background: transparent;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: #495057;
+    transition: all 0.2s ease;
+    margin-bottom: 1rem;
+    display: flex; /* Adicionado: Para alinhar a seta e o texto */
+    align-items: center; /* Adicionado: Para alinhar a seta e o texto verticalmente */
+    gap: 0.5rem; /* Adicionado: Espaço entre a seta e o texto */
+}
+
+.plano-detalhe-header .back-btn:hover {
+    background-color: #f1f3f5;
+    border-color: #adb5bd;
+}
+
+.plano-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 2rem;
+}
+
+.add-plan-btn {
+    background-color: var(--primary-color, #00A3A3);
+    color: white;
+    border: none;
+    padding: 0.85rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s;
+}
+
+.add-plan-btn:hover {
+    background-color: var(--dark-green, #007A7A);
+}
+
+.plan-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.plan-card {
+    background-color: var(--card-bg, #f8f9fa);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-color, #e9ecef);
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    position: relative;
+    /* Adicionado: Padding à direita para os botões absolutos */
+    padding-right: 5.5rem; /* Ajuste este valor conforme necessário */
+}
+
+.plan-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    /* Adicionado: Permite que o título ocupe o espaço restante */
+    flex-grow: 1; 
+}
+
+.plan-card-header h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-dark, #212529);
+    word-break: break-word; /* Permite que o título quebre linha */
+    line-height: 1.2;
+}
+
+.plan-status {
+    padding: 0.3rem 0.8rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: white;
+    margin-left: 1rem; /* Espaçamento entre o título e o status */
+    flex-shrink: 0; /* Impede que o status encolha */
+}
+
+.plan-status.ativo { background-color: #28a745; }
+.plan-status.rascunho { background-color: #ffc107; color: #343a40; }
+.plan-status.inativo { background-color: #6c757d; }
+
+.plan-card p {
+    font-size: 0.95rem;
+    color: #495057;
+}
+
+.macros-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.8rem;
+    border-top: 1px dashed #dee2e6;
+    margin-top: 0.8rem;
+}
+
+.macros-info span {
+    font-size: 0.9rem;
+    color: #6c757d;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    flex: 1; /* Distribui o espaço igualmente entre os spans */
+}
+.macros-info strong {
+    font-size: 1.1rem;
+    color: var(--primary-color);
+}
+
+.plan-card-actions {
+    position: absolute;
+    top: 1rem; /* Um pouco mais para cima */
+    right: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    background-color: var(--card-bg); /* Fundo para os botões flutuantes */
+    border-radius: 10px;
+    padding: 0.3rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.edit-plan-btn,
+.delete-plan-btn {
+    background-color: #e9ecef;
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #495057;
+    transition: background-color 0.2s, color 0.2s;
+    font-size: 1rem; /* Ajuste o tamanho do ícone se necessário */
+}
+
+.edit-plan-btn:hover { background-color: var(--primary-color); color: white; }
+.delete-plan-btn:hover { background-color: #dc3545; color: white; }
+
+/* Variáveis CSS (certifique-se de que estão definidas em um arquivo global como App.css ou index.css) */
+:root {
+  --primary-color: #00A3A3;
+  --dark-green: #007A7A;
+  --card-bg: #ffffff;
+  --border-color: #e0e0e0;
+  --text-dark: #212529;
+}

@@ -2,17 +2,27 @@ import React, { useState } from 'react';
 import Modal from 'react-modal';
 import './AddPatientModal.css';
 
-Modal.setAppElement('#root');
+// Certifique-se de que o elemento principal do seu aplicativo está configurado para o Modal.
+// Geralmente, isso é feito no index.js ou App.js principal: Modal.setAppElement('#root');
+Modal.setAppElement('#root'); // Assumindo que seu elemento raiz é #root
 
 export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded }) {
     const [formData, setFormData] = useState({
-        name: '', email: '', phone: '', birthDate: '', gender: 'Feminino',
-        height: '', currentWeight: '', objective: '', photoFile: null, // photoFile será usado temporariamente
-        photoURL: '' // NOVO: Armazenará a string Base64 da imagem
+        name: '', 
+        email: '', 
+        phone: '', 
+        birthDate: '', 
+        gender: 'Feminino',
+        height: '', 
+        currentWeight: '', 
+        objective: '', 
+        photoFile: null, // Usado temporariamente para o input de arquivo
+        photoURL: '' // Armazenará a string Base64 da imagem
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState({});
 
+    // Se o modal não estiver aberto, não renderiza nada
     if (!isOpen) return null;
 
     const handleInputChange = (e) => {
@@ -30,46 +40,63 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
             };
             reader.readAsDataURL(file); // Lê o arquivo como uma URL de dados (Base64)
         } else {
+            // Limpa a foto se nenhum arquivo for selecionado ou o existente for removido
             setFormData(prev => ({ ...prev, photoFile: null, photoURL: '' }));
         }
     };
 
+    // Função de validação para todos os campos do formulário
     const validateForm = () => {
         const newErrors = {};
 
         if (!formData.name.trim()) newErrors.name = "O nome é obrigatório.";
+        
         if (!formData.birthDate) {
             newErrors.birthDate = "A data de nascimento é obrigatória.";
-        } else if (new Date(formData.birthDate) > new Date()) {
-            newErrors.birthDate = "A data de nascimento não pode ser no futuro.";
+        } else {
+            const birth = new Date(formData.birthDate);
+            const today = new Date();
+            // Para garantir que a data de nascimento não seja no futuro
+            if (birth > today) {
+                newErrors.birthDate = "A data de nascimento não pode ser no futuro.";
+            }
         }
+        
         if (!formData.email) {
             newErrors.email = "O email é obrigatório.";
         } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
             newErrors.email = "O formato do email é inválido.";
         }
+        
         if (!formData.phone) newErrors.phone = "O telefone é obrigatório.";
-        if (!formData.height || formData.height <= 0) newErrors.height = "A altura deve ser um número positivo.";
-        if (!formData.currentWeight || formData.currentWeight <= 0) newErrors.currentWeight = "O peso deve ser um número positivo.";
+        
+        // Validação para números positivos para altura e peso
+        if (!formData.height || parseFloat(formData.height) <= 0) newErrors.height = "A altura deve ser um número positivo.";
+        if (!formData.currentWeight || parseFloat(formData.currentWeight) <= 0) newErrors.currentWeight = "O peso deve ser um número positivo.";
+        
         if (!formData.objective.trim()) newErrors.objective = "O objetivo é obrigatório.";
 
         return newErrors;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // Executa a validação antes de submeter
         const validationErrors = validateForm();
         if (Object.keys(validationErrors).length > 0) {
-            setErrors(validationErrors);
-            return;
+            setErrors(validationErrors); // Define os erros para serem exibidos
+            return; // Para a submissão se houver erros
         }
 
-        setErrors({});
+        // Limpa os erros se a validação passar
+        setErrors({}); 
         setIsSubmitting(true);
 
-        // A photoURL já contém a string Base64 ou está vazia
-        const photoURLToSave = formData.photoURL || 'https://via.placeholder.com/80'; // Usar placeholder se não houver foto
+        // Define a URL da foto (Base64 ou placeholder padrão)
+        const photoURLToSave = formData.photoURL || 'https://via.placeholder.com/80?text=NP'; // NP = Novo Paciente
 
+        // Calcula a idade com base na data de nascimento
         const birthDate = new Date(formData.birthDate);
         const today = new Date();
         let age = today.getFullYear() - birthDate.getFullYear();
@@ -78,35 +105,49 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
             age--;
         }
 
-        const newPatient = {
-            id: `patient-${Date.now()}`, 
+        const newPatientData = {
+            // O ID será gerado automaticamente pelo JSON Server ao receber o POST
             name: formData.name, 
-            age, 
+            age: age.toString(), // Converter para string se o seu PatientCard espera string
             gender: formData.gender,
             weight: formData.currentWeight, 
             objective: formData.objective, 
-            photoURL: photoURLToSave, // Usar a Base64 string
-            lastConsult: new Date().toLocaleDateString('pt-BR'), 
+            photoURL: photoURLToSave, 
+            lastConsult: new Date().toLocaleDateString('pt-BR'), // Data atual da criação
             email: formData.email,
             phone: formData.phone, 
             height: formData.height
         };
 
-        onPatientAdded(newPatient);
-        setIsSubmitting(false);
-        onRequestClose();
-        // Limpar o formulário após a submissão para a próxima abertura do modal
-        setFormData({
-            name: '', email: '', phone: '', birthDate: '', gender: 'Feminino',
-            height: '', currentWeight: '', objective: '', photoFile: null, photoURL: '',
-        });
+        try {
+            // Chama a função onPatientAdded passada pelo App.jsx (que fará a requisição POST)
+            await onPatientAdded(newPatientData);
+            onRequestClose(); // Fecha o modal após a submissão bem-sucedida
+
+            // Limpa o formulário após o sucesso para a próxima abertura do modal
+            setFormData({
+                name: '', email: '', phone: '', birthDate: '', gender: 'Feminino',
+                height: '', currentWeight: '', objective: '', photoFile: null, photoURL: '',
+            });
+        } catch (error) {
+            console.error("Falha ao adicionar paciente:", error);
+            // Aqui você poderia definir um erro no estado para exibir uma mensagem para o usuário
+        } finally {
+            setIsSubmitting(false); // Sempre redefine o estado de submissão
+        }
     };
 
     return (
-        <Modal isOpen={isOpen} onRequestClose={onRequestClose} className="modal" overlayClassName="overlay">
+        <Modal 
+            isOpen={isOpen} 
+            onRequestClose={onRequestClose} 
+            className="modal" 
+            overlayClassName="overlay"
+            contentLabel="Adicionar Novo Paciente" // Para acessibilidade
+        >
             <div className="modal-header">
                 <h2>Adicionar Novo Paciente</h2>
-                <button onClick={onRequestClose} className="close-btn">&times;</button>
+                <button onClick={onRequestClose} className="close-btn" title="Fechar">&times;</button>
             </div>
 
             <form onSubmit={handleSubmit} className="add-patient-form" noValidate>
@@ -114,35 +155,81 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
                     <h3>Informações Pessoais</h3>
                     <div className="form-grid">
                         <div className="form-group">
-                            <label>Nome Completo *</label>
-                            <input type="text" name="name" value={formData.name} onChange={handleInputChange} />
+                            <label htmlFor="name">Nome Completo *</label>
+                            <input 
+                                type="text" 
+                                id="name" 
+                                name="name" 
+                                value={formData.name} 
+                                onChange={handleInputChange} 
+                                className={errors.name ? 'has-error' : ''}
+                            />
                             {errors.name && <p className="error-message">{errors.name}</p>}
                         </div>
                         <div className="form-group">
-                            <label>Data de Nascimento *</label>
-                            <input type="date" name="birthDate" value={formData.birthDate} onChange={handleInputChange} />
+                            <label htmlFor="birthDate">Data de Nascimento *</label>
+                            <input 
+                                type="date" 
+                                id="birthDate" 
+                                name="birthDate" 
+                                value={formData.birthDate} 
+                                onChange={handleInputChange} 
+                                className={errors.birthDate ? 'has-error' : ''}
+                            />
                             {errors.birthDate && <p className="error-message">{errors.birthDate}</p>}
                         </div>
                         <div className="form-group">
-                            <label>Email *</label>
-                            <input type="email" name="email" value={formData.email} onChange={handleInputChange} />
+                            <label htmlFor="email">Email *</label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                value={formData.email} 
+                                onChange={handleInputChange} 
+                                className={errors.email ? 'has-error' : ''}
+                            />
                             {errors.email && <p className="error-message">{errors.email}</p>}
                         </div>
                         <div className="form-group">
-                            <label>Telefone *</label>
-                            <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} />
+                            <label htmlFor="phone">Telefone *</label>
+                            <input 
+                                type="tel" 
+                                id="phone" 
+                                name="phone" 
+                                value={formData.phone} 
+                                onChange={handleInputChange} 
+                                className={errors.phone ? 'has-error' : ''}
+                            />
                             {errors.phone && <p className="error-message">{errors.phone}</p>}
                         </div>
                         <div className="form-group">
-                            <label>Gênero</label>
-                            <select name="gender" value={formData.gender} onChange={handleInputChange}><option>Feminino</option><option>Masculino</option></select>
+                            <label htmlFor="gender">Gênero</label>
+                            <select 
+                                id="gender" 
+                                name="gender" 
+                                value={formData.gender} 
+                                onChange={handleInputChange}
+                            >
+                                <option>Feminino</option>
+                                <option>Masculino</option>
+                            </select>
                         </div>
                         <div className="form-group">
-                            <label>Foto</label>
-                            <input type="file" name="photoFile" accept="image/*" onChange={handleFileChange} />
-                            {/* Opcional: Visualização da imagem selecionada */}
+                            <label htmlFor="photoFile">Foto</label>
+                            <input 
+                                type="file" 
+                                id="photoFile" 
+                                name="photoFile" 
+                                accept="image/*" 
+                                onChange={handleFileChange} 
+                            />
+                            {/* Pré-visualização da imagem selecionada */}
                             {formData.photoURL && formData.photoURL.startsWith('data:image') && (
-                                <img src={formData.photoURL} alt="Pré-visualização da foto" style={{ marginTop: '10px', maxWidth: '100px', maxHeight: '100px', borderRadius: '8px', objectFit: 'cover' }} />
+                                <img 
+                                    src={formData.photoURL} 
+                                    alt="Pré-visualização da foto" 
+                                    style={{ marginTop: '10px', maxWidth: '100px', maxHeight: '100px', borderRadius: '8px', objectFit: 'cover' }} 
+                                />
                             )}
                         </div>
                     </div>
@@ -152,18 +239,40 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
                     <h3>Informações Físicas e Objetivos</h3>
                     <div className="form-grid">
                         <div className="form-group">
-                            <label>Altura (cm) *</label>
-                            <input type="number" name="height" value={formData.height} onChange={handleInputChange} />
+                            <label htmlFor="height">Altura (cm) *</label>
+                            <input 
+                                type="number" 
+                                id="height" 
+                                name="height" 
+                                value={formData.height} 
+                                onChange={handleInputChange} 
+                                className={errors.height ? 'has-error' : ''}
+                            />
                             {errors.height && <p className="error-message">{errors.height}</p>}
                         </div>
                         <div className="form-group">
-                            <label>Peso Atual (kg) *</label>
-                            <input type="number" name="currentWeight" step="0.1" value={formData.currentWeight} onChange={handleInputChange} />
+                            <label htmlFor="currentWeight">Peso Atual (kg) *</label>
+                            <input 
+                                type="number" 
+                                id="currentWeight" 
+                                name="currentWeight" 
+                                step="0.1" 
+                                value={formData.currentWeight} 
+                                onChange={handleInputChange} 
+                                className={errors.currentWeight ? 'has-error' : ''}
+                            />
                             {errors.currentWeight && <p className="error-message">{errors.currentWeight}</p>}
                         </div>
                         <div className="form-group">
-                            <label>Objetivo Principal *</label>
-                            <input type="text" name="objective" value={formData.objective} onChange={handleInputChange} />
+                            <label htmlFor="objective">Objetivo Principal *</label>
+                            <input 
+                                type="text" 
+                                id="objective" 
+                                name="objective" 
+                                value={formData.objective} 
+                                onChange={handleInputChange} 
+                                className={errors.objective ? 'has-error' : ''}
+                            />
                             {errors.objective && <p className="error-message">{errors.objective}</p>}
                         </div>
                     </div>

@@ -5,6 +5,14 @@
   font-family: 'Inter', sans-serif;
 }
 
+:root {
+  --primary-color: #00A3A3;
+  --dark-green: #007A7A;
+  --card-bg: #ffffff;
+  --border-color: #e0e0e0;
+  --text-dark: #212529;
+}
+
 /* Styles for content when sidebar is present */
 main.app-content {
   flex-grow: 1; /* Permite que o conteúdo principal ocupe o espaço restante */
