@@ -1,14 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import Modal from 'react-modal';
-import './AddPatientModal.css';
+// Se FaPlus for usado no JSX do AddPatientModal, mantenha. Caso contrário, pode remover.
+// Pelo código anterior, FaPlus não era usado diretamente no JSX deste modal.
+// import { FaPlus } from 'react-icons/fa'; 
 
-// Certifique-se de que o elemento principal do seu aplicativo está configurado para o Modal.
-// Geralmente, isso é feito no index.js ou App.js principal: Modal.setAppElement('#root');
-Modal.setAppElement('#root'); // Assumindo que seu elemento raiz é #root
+import './AddPatientModal.css'; // Este é o CSS CORRETO para este modal
 
+// Importe a configuração do Cloudinary.
+// O caminho deve ser ajustado com base na localização exata do seu arquivo.
+// Se está em src/config/cloudinaryConfig.js e o modal em src/components/components_Pacientes/, então '../../config/cloudinaryConfig'.
+import cloudinaryConfig from '../../firebase/cloudinaryConfig'; 
 
+// Garante que o elemento raiz da sua aplicação está configurado para o Modal.
+// Isso geralmente é feito uma vez no seu main.jsx ou index.js
+Modal.setAppElement('#root');
 
 export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded }) {
+    // 1. Definição dos Estados (TODOS OS HOOKS DEVEM VIR PRIMEIRO)
     const [formData, setFormData] = useState({
         name: '', 
         email: '', 
@@ -18,84 +26,101 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
         height: '', 
         currentWeight: '', 
         objective: '', 
-        photoFile: null, // Usado temporariamente para o input de arquivo
-        photoURL: '' // Armazenará a string Base64 da imagem
+        photoURL: '' // Armazenará a URL do Cloudinary
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState({});
+    const [uploadingImage, setUploadingImage] = useState(false);
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                // Quando o arquivo é lido, a URL Base64 é armazenada em photoURL
-                setFormData(prev => ({ ...prev, photoFile: file, photoURL: reader.result }));
-            };
-            reader.readAsDataURL(file); // Lê o arquivo como uma URL de dados (Base64)
-        } else {
-            // Limpa a foto se nenhum arquivo for selecionado ou o existente for removido
-            setFormData(prev => ({ ...prev, photoFile: null, photoURL: '' }));
-        }
-    };
-
-    // Função de validação para todos os campos do formulário
-    const validateForm = () => {
+    // 2. Funções de Validação (useCallback para otimização)
+    const validateForm = useCallback(() => {
         const newErrors = {};
-
         if (!formData.name.trim()) newErrors.name = "O nome é obrigatório.";
-        
         if (!formData.birthDate) {
             newErrors.birthDate = "A data de nascimento é obrigatória.";
         } else {
             const birth = new Date(formData.birthDate);
             const today = new Date();
-            // Para garantir que a data de nascimento não seja no futuro
             if (birth > today) {
                 newErrors.birthDate = "A data de nascimento não pode ser no futuro.";
             }
         }
-        
         if (!formData.email) {
             newErrors.email = "O email é obrigatório.";
         } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
             newErrors.email = "O formato do email é inválido.";
         }
-        
         if (!formData.phone) newErrors.phone = "O telefone é obrigatório.";
-        
-        // Validação para números positivos para altura e peso
         if (!formData.height || parseFloat(formData.height) <= 0) newErrors.height = "A altura deve ser um número positivo.";
         if (!formData.currentWeight || parseFloat(formData.currentWeight) <= 0) newErrors.currentWeight = "O peso deve ser um número positivo.";
-        
         if (!formData.objective.trim()) newErrors.objective = "O objetivo é obrigatório.";
-
         return newErrors;
+    }, [formData]);
+
+    // 3. Renderização Condicional (DEPOIS DOS HOOKS)
+    if (!isOpen) return null; // Renderiza null se o modal não estiver aberto
+
+    // 4. Handlers de Eventos
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        // console.log(`Input changed: ${name}, value: ${value}`); // Para depuração
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setUploadingImage(true); 
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', file);
+            uploadFormData.append('upload_preset', cloudinaryConfig.uploadPreset); 
+
+            try {
+                const response = await fetch(
+                    `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`,
+                    {
+                        method: 'POST',
+                        body: uploadFormData,
+                    }
+                );
+                if (!response.ok) {
+                    throw new Error(`Upload para Cloudinary falhou: ${response.statusText}`);
+                }
+                const data = await response.json();
+                console.log("Cloudinary Upload Response:", data); 
+                setFormData(prev => ({ ...prev, photoURL: data.secure_url })); 
+                alert("Imagem enviada com sucesso para o Cloudinary!");
+            } catch (error) {
+                console.error("Erro ao enviar imagem para o Cloudinary:", error);
+                alert("Falha ao enviar imagem. Verifique o console.");
+                setFormData(prev => ({ ...prev, photoURL: '' })); 
+            } finally {
+                setUploadingImage(false); 
+            }
+        } else {
+            setFormData(prev => ({ ...prev, photoURL: '' }));
+        }
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        
-        // Executa a validação antes de submeter
-        const validationErrors = validateForm();
-        if (Object.keys(validationErrors).length > 0) {
-            setErrors(validationErrors); // Define os erros para serem exibidos
-            return; // Para a submissão se houver erros
+        e.preventDefault(); // PREVINE O RECARREGAMENTO DA PÁGINA
+
+        if (uploadingImage) {
+            alert("Aguarde o upload da imagem ser concluído.");
+            return;
         }
 
-        // Limpa os erros se a validação passar
+        const validationErrors = validateForm();
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors); 
+            return; 
+        }
+
         setErrors({}); 
         setIsSubmitting(true);
 
-        // Define a URL da foto (Base64 ou placeholder padrão)
-        const photoURLToSave = formData.photoURL || 'https://via.placeholder.com/80?text=NP'; // NP = Novo Paciente
+        const photoURLToSave = formData.photoURL || 'https://via.placeholder.com/80?text=NP'; 
 
-        // Calcula a idade com base na data de nascimento
         const birthDate = new Date(formData.birthDate);
         const today = new Date();
         let age = today.getFullYear() - birthDate.getFullYear();
@@ -105,44 +130,43 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
         }
 
         const newPatientData = {
-            // O ID será gerado automaticamente pelo JSON Server ao receber o POST
             name: formData.name, 
-            age: age.toString(), // Converter para string se o seu PatientCard espera string
+            age: age.toString(), 
             gender: formData.gender,
             weight: formData.currentWeight, 
             objective: formData.objective, 
             photoURL: photoURLToSave, 
-            lastConsult: new Date().toLocaleDateString('pt-BR'), // Data atual da criação
+            lastConsult: new Date().toLocaleDateString('pt-BR'), 
             email: formData.email,
             phone: formData.phone, 
             height: formData.height
         };
 
         try {
-            // Chama a função onPatientAdded passada pelo App.jsx (que fará a requisição POST)
             await onPatientAdded(newPatientData);
-            onRequestClose(); // Fecha o modal após a submissão bem-sucedida
+            onRequestClose(); 
 
             // Limpa o formulário após o sucesso para a próxima abertura do modal
             setFormData({
                 name: '', email: '', phone: '', birthDate: '', gender: 'Feminino',
-                height: '', currentWeight: '', objective: '', photoFile: null, photoURL: '',
+                height: '', currentWeight: '', objective: '', photoURL: '',
             });
         } catch (error) {
             console.error("Falha ao adicionar paciente:", error);
-            // Aqui você poderia definir um erro no estado para exibir uma mensagem para o usuário
+            // Aqui você pode adicionar um setErrors para mostrar ao usuário que o salvamento falhou
         } finally {
-            setIsSubmitting(false); // Sempre redefine o estado de submissão
+            setIsSubmitting(false); 
         }
     };
 
+    // 5. Renderização do JSX
     return (
         <Modal 
             isOpen={isOpen} 
             onRequestClose={onRequestClose} 
-            className="modal" 
+            className="modal" // Classe definida no AddPatientModal.css
             overlayClassName="overlay"
-            contentLabel="Adicionar Novo Paciente" // Para acessibilidade
+            contentLabel="Adicionar Novo Paciente" 
         >
             <div className="modal-header">
                 <h2>Adicionar Novo Paciente</h2>
@@ -159,8 +183,8 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
                                 type="text" 
                                 id="name" 
                                 name="name" 
-                                value={formData.name} 
-                                onChange={handleInputChange} 
+                                value={formData.name} // Controlado
+                                onChange={handleInputChange} // Atualizado
                                 className={errors.name ? 'has-error' : ''}
                             />
                             {errors.name && <p className="error-message">{errors.name}</p>}
@@ -171,8 +195,8 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
                                 type="date" 
                                 id="birthDate" 
                                 name="birthDate" 
-                                value={formData.birthDate} 
-                                onChange={handleInputChange} 
+                                value={formData.birthDate} // Controlado
+                                onChange={handleInputChange} // Atualizado
                                 className={errors.birthDate ? 'has-error' : ''}
                             />
                             {errors.birthDate && <p className="error-message">{errors.birthDate}</p>}
@@ -183,8 +207,8 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
                                 type="email" 
                                 id="email" 
                                 name="email" 
-                                value={formData.email} 
-                                onChange={handleInputChange} 
+                                value={formData.email} // Controlado
+                                onChange={handleInputChange} // Atualizado
                                 className={errors.email ? 'has-error' : ''}
                             />
                             {errors.email && <p className="error-message">{errors.email}</p>}
@@ -195,8 +219,8 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
                                 type="tel" 
                                 id="phone" 
                                 name="phone" 
-                                value={formData.phone} 
-                                onChange={handleInputChange} 
+                                value={formData.phone} // Controlado
+                                onChange={handleInputChange} // Atualizado
                                 className={errors.phone ? 'has-error' : ''}
                             />
                             {errors.phone && <p className="error-message">{errors.phone}</p>}
@@ -206,8 +230,8 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
                             <select 
                                 id="gender" 
                                 name="gender" 
-                                value={formData.gender} 
-                                onChange={handleInputChange}
+                                value={formData.gender} // Controlado
+                                onChange={handleInputChange} // Atualizado
                             >
                                 <option>Feminino</option>
                                 <option>Masculino</option>
@@ -221,9 +245,10 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
                                 name="photoFile" 
                                 accept="image/*" 
                                 onChange={handleFileChange} 
+                                disabled={uploadingImage} 
                             />
-                            {/* Pré-visualização da imagem selecionada */}
-                            {formData.photoURL && formData.photoURL.startsWith('data:image') && (
+                            {uploadingImage && <p>Enviando imagem...</p>}
+                            {formData.photoURL && formData.photoURL.startsWith('http') && (
                                 <img 
                                     src={formData.photoURL} 
                                     alt="Pré-visualização da foto" 
@@ -243,8 +268,8 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
                                 type="number" 
                                 id="height" 
                                 name="height" 
-                                value={formData.height} 
-                                onChange={handleInputChange} 
+                                value={formData.height} // Controlado
+                                onChange={handleInputChange} // Atualizado
                                 className={errors.height ? 'has-error' : ''}
                             />
                             {errors.height && <p className="error-message">{errors.height}</p>}
@@ -256,8 +281,8 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
                                 id="currentWeight" 
                                 name="currentWeight" 
                                 step="0.1" 
-                                value={formData.currentWeight} 
-                                onChange={handleInputChange} 
+                                value={formData.currentWeight} // Controlado
+                                onChange={handleInputChange} // Atualizado
                                 className={errors.currentWeight ? 'has-error' : ''}
                             />
                             {errors.currentWeight && <p className="error-message">{errors.currentWeight}</p>}
@@ -268,8 +293,8 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
                                 type="text" 
                                 id="objective" 
                                 name="objective" 
-                                value={formData.objective} 
-                                onChange={handleInputChange} 
+                                value={formData.objective} // Controlado
+                                onChange={handleInputChange} // Atualizado
                                 className={errors.objective ? 'has-error' : ''}
                             />
                             {errors.objective && <p className="error-message">{errors.objective}</p>}
@@ -278,9 +303,9 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
                 </div>
 
                 <div className="form-actions">
-                    <button type="button" onClick={onRequestClose} className="btn-cancel" disabled={isSubmitting}>Cancelar</button>
-                    <button type="submit" className="btn-submit" disabled={isSubmitting}>
-                        {isSubmitting ? 'Salvando...' : 'Salvar Paciente'}
+                    <button type="button" onClick={onRequestClose} className="btn-cancel" disabled={isSubmitting || uploadingImage}>Cancelar</button>
+                    <button type="submit" className="btn-submit" disabled={isSubmitting || uploadingImage}>
+                        {isSubmitting ? 'Salvando...' : (uploadingImage ? 'Enviando Imagem...' : 'Salvar Paciente')}
                     </button>
                 </div>
             </form>

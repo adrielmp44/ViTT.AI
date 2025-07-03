@@ -3,24 +3,28 @@ import { FaSearch } from 'react-icons/fa';
 import PatientCard from '../components_Pacientes/PatientCard.jsx'; 
 import './Planos.css'; 
 
-const API_BASE_URL = 'http://localhost:5000';
+// Importar o 'db' e funções Firestore necessárias para a busca interna.
+// Embora fetchFoodPlansByPatientId venha de props, a busca mais geral pode precisar de mais imports.
+import { db } from '../../firebase/firebase.js';
+import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 
-export default function PlanosPage({ patients }) { 
+
+export default function PlanosPage({ patients, fetchFoodPlansByPatientId }) { // Recebe fetchFoodPlansByPatientId
   const [searchTerm, setSearchTerm] = useState('');
   const [patientsWithPlanInfo, setPatientsWithPlanInfo] = useState([]);
-  const [loadingLocal, setLoadingLocal] = useState(true); // Renomeado para evitar conflito com 'loading' do App.jsx
-  const [errorLocal, setErrorLocal] = useState(null); // Renomeado para evitar conflito com 'error' do App.jsx
+  const [loadingLocal, setLoadingLocal] = useState(true); 
+  const [errorLocal, setErrorLocal] = useState(null); 
 
-  console.log("Planos.jsx: Prop 'patients' recebida do App.jsx:", patients); // LOG
+  console.log("Planos.jsx: Prop 'patients' recebida do App.jsx:", patients); 
 
   useEffect(() => {
     const fetchPatientsAndPlanInfo = async () => {
-      console.log("Planos.jsx: Iniciando fetchPatientsAndPlanInfo..."); // LOG
+      console.log("Planos.jsx: Iniciando fetchPatientsAndPlanInfo...");
       setLoadingLocal(true);
       setErrorLocal(null);
       try {
         if (!patients || patients.length === 0) {
-          console.log("Planos.jsx: Nenhum paciente na lista. Finalizando fetch."); // LOG
+          console.log("Planos.jsx: Nenhum paciente na lista. Finalizando fetch.");
           setPatientsWithPlanInfo([]);
           setLoadingLocal(false);
           return;
@@ -28,16 +32,15 @@ export default function PlanosPage({ patients }) {
 
         const updatedPatients = await Promise.all(
           patients.map(async (patient) => {
-            console.log(`Planos.jsx: Buscando plano para paciente ID: ${patient.id}`); // LOG
+            console.log(`Planos.jsx: Buscando último plano para paciente ID: ${patient.id} no Firebase`);
             try {
-                const response = await fetch(`${API_BASE_URL}/foodPlans?patientId=${patient.id}&_sort=startDate&_order=desc&_limit=1`);
-                if (!response.ok) {
-                    console.warn(`Planos.jsx: Aviso: Não foi possível buscar planos para o paciente ${patient.name}. Status: ${response.status}`); // LOG
-                    // Retorna paciente com info de erro para o plano, mas não impede a renderização
-                    return { ...patient, lastPlanTitle: 'Erro ao carregar planos', totalCalories: 'N/A', proteins: 'N/A', carbs: 'N/A', fats: 'N/A', status: 'N/A', duration: 'N/A' };
-                }
-                const plans = await response.json();
-                console.log(`Planos.jsx: Planos recebidos para ${patient.name}:`, plans); // LOG
+                // Usa a função passada de App.jsx com opções para pegar o último plano
+                const plans = await fetchFoodPlansByPatientId(patient.id, { 
+                    orderByField: "startDate", 
+                    orderByDirection: "desc", 
+                    limit: 1 
+                });
+                
                 const lastPlan = plans[0]; 
 
                 if (lastPlan) {
@@ -68,40 +71,37 @@ export default function PlanosPage({ patients }) {
                   };
                 }
             } catch (innerError) {
-                console.error(`Planos.jsx: Erro de rede/API ao buscar planos para ${patient.name}:`, innerError); // LOG
-                return { ...patient, lastPlanTitle: 'Erro de conexão', totalCalories: 'N/A', proteins: 'N/A', carbs: 'N/A', fats: 'N/A', status: 'N/A', duration: 'N/A' };
+                console.error(`Planos.jsx: Erro ao buscar último plano para ${patient.name} do Firebase:`, innerError);
+                return { ...patient, lastPlanTitle: 'Erro ao carregar', totalCalories: 'N/A', proteins: 'N/A', carbs: 'N/A', fats: 'N/A', status: 'N/A', duration: 'N/A' };
             }
           })
         );
         setPatientsWithPlanInfo(updatedPatients);
-        console.log("Planos.jsx: Pacientes com info de plano atualizados:", updatedPatients); // LOG
+        console.log("Planos.jsx: Pacientes com info de plano atualizados:", updatedPatients);
       } catch (e) {
-        console.error("Planos.jsx: Erro ao carregar informações de planos (geral):", e); // LOG
-        setErrorLocal("Não foi possível carregar os planos dos pacientes.");
+        console.error("Planos.jsx: Erro ao carregar informações de planos (geral):", e);
+        setErrorLocal("Não foi possível carregar os planos dos pacientes do Firebase.");
       } finally {
         setLoadingLocal(false);
-        console.log("Planos.jsx: Carregamento de planos finalizado."); // LOG
+        console.log("Planos.jsx: Carregamento de planos finalizado.");
       }
     };
 
-    // Só busca os planos se a lista de pacientes não estiver vazia
-    // e se o carregamento do App.jsx já tiver sido finalizado (implicado pela prop 'patients' estar preenchida)
     if (patients && patients.length > 0) { 
         fetchPatientsAndPlanInfo();
     } else if (patients && patients.length === 0) {
-        // Se não há pacientes e a lista já foi carregada como vazia
         setPatientsWithPlanInfo([]);
         setLoadingLocal(false);
-        console.log("Planos.jsx: Lista de pacientes vazia, não há planos para buscar."); // LOG
+        console.log("Planos.jsx: Lista de pacientes vazia, não há planos para buscar.");
     }
-  }, [patients]); // Executa quando a prop 'patients' muda
+  }, [patients, fetchFoodPlansByPatientId]); // Adiciona fetchFoodPlansByPatientId como dependência
 
   const filteredPatients = patientsWithPlanInfo.filter(patient =>
     patient.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loadingLocal) {
-    return <div className="patient-list-container"><p>Carregando planos dos pacientes...</p></div>;
+    return <div className="patient-list-container"><p>Carregando planos dos pacientes do Firebase...</p></div>;
   }
 
   if (errorLocal) {

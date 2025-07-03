@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import './EditarPaciente.css';
+import './EditarPaciente.css'
 import { FaTrashAlt } from 'react-icons/fa';
 
 const getPatientById = (id, patients) => {
@@ -19,15 +19,14 @@ export default function EditarPacientes({ patients, setPatients, onDeletePatient
         birthDate: patientData?.birthDate || '',
         gender: patientData?.gender || 'Feminino',
         height: patientData?.height || '',
-        currentWeight: patientData?.weight || '', // Inicializa com 'weight' do patientData
+        currentWeight: patientData?.weight || '', 
         objective: patientData?.objective || '',
+        // photoURL: patientData?.photoURL || '', // Manter a photoURL para exibição
     });
 
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // useEffect para re-popular o formulário se patientData mudar
-    // Isso é importante caso a busca de pacientes em App.jsx seja assíncrona
     useEffect(() => {
         if (patientData) {
             setFormData({
@@ -37,8 +36,9 @@ export default function EditarPacientes({ patients, setPatients, onDeletePatient
                 birthDate: patientData.birthDate || '',
                 gender: patientData.gender || 'Feminino',
                 height: patientData.height || '',
-                currentWeight: patientData.weight || '', // Assegura que o peso atual é o do paciente
+                currentWeight: patientData.weight || '', 
                 objective: patientData.objective || '',
+                // photoURL: patientData.photoURL || '', // Atualizar photoURL aqui também
             });
         }
     }, [patientData]);
@@ -88,7 +88,6 @@ export default function EditarPacientes({ patients, setPatients, onDeletePatient
         setErrors({});
         setIsSubmitting(true);
 
-        // Recalcular idade baseado na nova data de nascimento
         const birthDate = new Date(formData.birthDate);
         const today = new Date();
         let age = today.getFullYear() - birthDate.getFullYear();
@@ -98,20 +97,20 @@ export default function EditarPacientes({ patients, setPatients, onDeletePatient
         }
 
         const dataToUpdate = { 
-            ...patientData, // Mantém todos os dados existentes (incluindo photoURL, lastConsult, etc.)
+            ...patientData, 
             ...formData, 
-            age: age.toString(), // ATUALIZADO: Recalcula e atribui a idade
-            weight: formData.currentWeight // ATUALIZADO: Atribui o peso atual
+            age: age.toString(), 
+            weight: formData.currentWeight 
         };
         
-        // Remove 'currentWeight' do objeto final para evitar duplicação
         delete dataToUpdate.currentWeight; 
 
         try {
-            await setPatients(id, dataToUpdate); // setPatients é a handleUpdatePatient do App.jsx
+            console.log("EditarPaciente.jsx: Tentando atualizar paciente ID:", id, "com dados:", dataToUpdate); 
+            await setPatients(id, dataToUpdate); 
             navigate('/pacientes'); 
         } catch (error) {
-            console.error("Falha ao atualizar paciente:", error);
+            console.error("EditarPaciente.jsx: Falha ao atualizar paciente:", error); 
         } finally {
             setIsSubmitting(false);
         }
@@ -122,10 +121,11 @@ export default function EditarPacientes({ patients, setPatients, onDeletePatient
         if (confirmDelete) {
             setIsSubmitting(true); 
             try {
-                await onDeletePatient(id); // onDeletePatient é a handleDeletePatient do App.jsx
+                console.log("EditarPaciente.jsx: Tentando deletar paciente ID:", id); 
+                await onDeletePatient(id); 
                 navigate('/pacientes'); 
             } catch (error) {
-                console.error("Falha ao deletar paciente:", error);
+                console.error("EditarPaciente.jsx: Falha ao deletar paciente:", error); 
             } finally {
                 setIsSubmitting(false);
             }
@@ -148,6 +148,14 @@ export default function EditarPacientes({ patients, setPatients, onDeletePatient
             <div className="edit-patient-header">
                 <button onClick={() => navigate(-1)} className="back-btn" title="Voltar">&larr; Voltar</button>
                 <h1>Editar Perfil do Paciente</h1>
+                {/* Exibir foto do paciente aqui */}
+                {patientData.photoURL && patientData.photoURL.startsWith('http') && (
+                    <img 
+                        src={patientData.photoURL} 
+                        alt={patientData.name} 
+                        style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', marginLeft: '20px' }} 
+                    />
+                )}
             </div>
             <form onSubmit={handleSubmit} className="edit-patient-form" noValidate>
                 <div className="form-section">
