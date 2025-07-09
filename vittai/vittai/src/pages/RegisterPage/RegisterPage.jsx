@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { auth } from '../../firebase/firebase';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc, getFirestore } from 'firebase/firestore';
 import './RegisterPage.css';
 
 export default function RegisterPage() {
@@ -11,6 +12,11 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [crn, setCrn] = useState('');
+  const [cpf, setCpf] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [phone, setPhone] = useState('');
+  const [specialty, setSpecialty] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -19,7 +25,7 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
 
-    if (!email || !password || !fullName) {
+    if (!email || !password || !fullName || !crn || !cpf || !birthDate || !phone || !specialty) {
       setError("Por favor, preencha todos os campos obrigatórios.");
       setLoading(false);
       return;
@@ -34,7 +40,20 @@ export default function RegisterPage() {
         displayName: fullName
       });
 
-      // 3. Navegar para a página inicial
+      // 3. Salvar informações adicionais no Firestore
+      const db = getFirestore();
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+        fullName,
+        email,
+        crn,
+        cpf,
+        birthDate,
+        phone,
+        specialty,
+        createdAt: new Date()
+      });
+
+      // 4. Navegar para a página inicial
       navigate('/home');
     } catch (err) {
       switch (err.code) {
@@ -90,6 +109,51 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               required 
             />
+            <input 
+              type="text" 
+              placeholder="CRN*" 
+              className="register-input" 
+              value={crn}
+              onChange={(e) => setCrn(e.target.value)}
+              required 
+            />
+            <input 
+              type="text" 
+              placeholder="CPF*" 
+              className="register-input" 
+              value={cpf}
+              onChange={(e) => setCpf(e.target.value)}
+              required 
+            />
+            <input 
+              type="date" 
+              placeholder="Data de Nascimento*" 
+              className="register-input" 
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              required 
+            />
+            <input 
+              type="tel" 
+              placeholder="Número de Contato*" 
+              className="register-input" 
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required 
+            />
+            <select 
+              className="register-input" 
+              value={specialty}
+              onChange={(e) => setSpecialty(e.target.value)}
+              required
+            >
+              <option value="">Selecione a Especialidade*</option>
+              <option value="Nutrição Clínica">Nutrição Clínica</option>
+              <option value="Nutrição Esportiva">Nutrição Esportiva</option>
+              <option value="Nutrição Materno-Infantil">Nutrição Materno-Infantil</option>
+              <option value="Nutrição Funcional">Nutrição Funcional</option>
+              <option value="Nutrição Gerontológica">Nutrição Gerontológica</option>
+            </select>
           </div>
           
           {error && <p className="error-message" style={{color: 'red', textAlign: 'center', marginTop: '10px'}}>{error}</p>}

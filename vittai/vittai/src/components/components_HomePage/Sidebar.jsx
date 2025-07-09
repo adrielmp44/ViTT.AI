@@ -1,13 +1,29 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { FaHome, FaUsers, FaClipboardList, FaFileMedical, FaChartLine, FaCalendarAlt, FaCommentDots, FaCog, FaSignOutAlt } from 'react-icons/fa';
 import { auth } from '../../firebase/firebase';
 import { signOut } from 'firebase/auth';
+import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import './Sidebar.css';
 
 export default function Sidebar() {
   const navigate = useNavigate();
-  const user = auth.currentUser; // Obter o usuário atual do Firebase
+  const [userData, setUserData] = useState(null);
+  const user = auth.currentUser;
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (user) {
+        const db = getFirestore();
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          setUserData(userDoc.data());
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [user]);
 
   const handleLogout = async () => {
     if (window.confirm("Tem certeza de que deseja sair?")) {
@@ -43,9 +59,8 @@ export default function Sidebar() {
         </div>
         <div className="user-profile">
           <div className="user-info">
-            {/* Mostrar o displayName do usuário ou email caso displayName não exista */}
             <span className="user-name">{user?.displayName || user?.email || 'Usuário'}</span>
-            <span className="user-crn">CRN 40C5822</span>
+            <span className="user-crn">CRN {userData?.crn || 'Não informado'}</span>
           </div>
           <button className="logout-button" onClick={handleLogout} title="Sair">
             <FaSignOutAlt />
