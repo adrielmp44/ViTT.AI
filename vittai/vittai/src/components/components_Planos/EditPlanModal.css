@@ -542,3 +542,38 @@ input.has-error, select.has-error, textarea.has-error {
     background-color: #a0a0a0;
     cursor: not-allowed;
 }
+.food-item-row-wrapper {
+  position: relative; /* Essencial para posicionar a lista de resultados */
+}
+
+.food-search-results {
+  position: absolute;
+  top: 100%; /* Posiciona a lista logo abaixo do input */
+  left: 0;
+  width: 100%; /* Faz a lista ter a mesma largura que o wrapper */
+  background-color: #ffffff;
+  border: 1px solid #ced4da;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000; /* Garante que a lista fique sobre outros elementos */
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.search-result-item {
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #212529;
+  border-bottom: 1px solid #f1f3f5;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover {
+  background-color: #f1f3f5; /* Um cinza claro no hover */
+  color: var(--primary-color, #00A3A3);
+}

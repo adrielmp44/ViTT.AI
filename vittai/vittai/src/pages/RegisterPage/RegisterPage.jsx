@@ -1,33 +1,112 @@
-import React from 'react';
+// src/pages/RegisterPage/RegisterPage.jsx
+
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { auth } from '../../firebase/firebase';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import './RegisterPage.css';
-// Importe FaUserPlus se estiver usando ícones, como no Sidebar.jsx
-// import { FaUserPlus } from 'react-icons/fa';
 
 export default function RegisterPage() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    if (!email || !password || !fullName) {
+      setError("Por favor, preencha todos os campos obrigatórios.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // 1. Criar o usuário com email e senha
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // 2. Atualizar o perfil do usuário com o nome completo
+      await updateProfile(userCredential.user, {
+        displayName: fullName
+      });
+
+      // 3. Navegar para a página inicial
+      navigate('/home');
+    } catch (err) {
+      switch (err.code) {
+        case 'auth/email-already-in-use':
+          setError('Este endereço de email já está em uso.');
+          break;
+        case 'auth/weak-password':
+          setError('A senha é muito fraca. Use pelo menos 6 caracteres.');
+          break;
+        case 'auth/invalid-email':
+          setError('O formato do email é inválido.');
+          break;
+        default:
+          setError('Ocorreu um erro ao tentar criar a conta. Tente novamente.');
+      }
+      console.error("Erro no registro:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="register-page-container">
       <div className="register-card">
         <div className="register-icon-placeholder">
-          {/* Use um ícone real aqui, ex: <FaUserPlus /> */}
-          <i className="fa-solid fa-user-plus"></i> {/* Exemplo para Font Awesome */}
+          <i className="fa-solid fa-user-plus"></i>
         </div>
-        <h2 className="register-title">Dados Cadastrais</h2>
-        <div className="form-grid">
-          <input type="text" placeholder="Nome completo*" className="register-input full-width" required />
-          <input type="text" placeholder="Especialidade*" className="register-input" required />
-          <input type="text" placeholder="CPF*" className="register-input" required />
-          <input type="text" placeholder="CRN*" className="register-input" required />
-          <input type="text" placeholder="RG*" className="register-input" required />
-          <input type="text" placeholder="Número de Contato*" className="register-input" required />
-          <input type="date" placeholder="Data de Nascimento*" className="register-input" required />
-          <input type="email" placeholder="Email*" className="register-input full-width" required />
-          <input type="password" placeholder="Senha*" className="register-input full-width" required />
-        </div>
-        <div className="terms-checkbox">
-          <input type="checkbox" id="terms" required />
-          <label htmlFor="terms">Eu concordo com os Termos de Uso e Política de Privacidade</label>
-        </div>
-        <button className="register-button">Cadastrar</button>
+        <h2 className="register-title">Criar Conta</h2>
+        
+        <form onSubmit={handleRegister} noValidate>
+          <div className="form-grid">
+            <input 
+              type="text" 
+              placeholder="Nome completo*" 
+              className="register-input full-width" 
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required 
+            />
+            <input 
+              type="email" 
+              placeholder="Email*" 
+              className="register-input full-width"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)} 
+              required 
+            />
+            <input 
+              type="password" 
+              placeholder="Senha (mínimo 6 caracteres)*" 
+              className="register-input full-width" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required 
+            />
+          </div>
+          
+          {error && <p className="error-message" style={{color: 'red', textAlign: 'center', marginTop: '10px'}}>{error}</p>}
+          
+          <div className="terms-checkbox">
+            <input type="checkbox" id="terms" required />
+            <label htmlFor="terms">Eu concordo com os Termos de Uso e Política de Privacidade</label>
+          </div>
+          
+          <button type="submit" className="register-button" disabled={loading}>
+            {loading ? 'Cadastrando...' : 'Cadastrar'}
+          </button>
+        </form>
+
+        <Link to="/login" className="back-to-login-link" style={{marginTop: '15px', display: 'block', textAlign: 'center'}}>
+          Já tem uma conta? Faça Login
+        </Link>
       </div>
     </div>
   );

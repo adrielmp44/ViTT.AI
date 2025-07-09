@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 
-// Importação dos componentes de página e componentes gerais
+// NOTA: Verifique se os caminhos abaixo correspondem à sua estrutura de pastas.
 import Sidebar from './components/components_HomePage/Sidebar';
 import HomePage from './pages/HomePage/HomePage';
 import PreLoginHomePage from './pages/PreLoginHomePage/PreLoginHomePage';
@@ -15,210 +15,186 @@ import PlanoDetalhePage from './components/components_Planos/PlanoDetalhe.jsx';
 
 import './App.css';
 
-// Importar o 'db' do seu arquivo de configuração do Firebase
-import { db } from './firebase/firebase.js';
-// Importar funções Firestore necessárias
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy, limit } from 'firebase/firestore';
-
+// Importações do Firebase
+import { db, auth } from './firebase/firebase.js';
+import { onAuthStateChanged } from 'firebase/auth';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, limit } from 'firebase/firestore';
 
 function App() {
   const location = useLocation();
   
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
   const [patients, setPatients] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState(null);
 
-  // Referências às coleções no Firestore
-  const patientsCollectionRef = collection(db, "patients");
-  const foodPlansCollectionRef = collection(db, "foodPlans");
-
-
-  // FUNÇÃO AUXILIAR: Busca planos por patientId no Firestore
-  // Esta função agora será mais genérica e poderá ser reutilizada.
-  const fetchFoodPlansByPatientIdFromFirestore = async (patientId, options = {}) => {
-    try {
-      let q = query(foodPlansCollectionRef, where("patientId", "==", patientId));
-      
-      // Adiciona ordenação e limite se especificado (útil para PlanosPage)
-      if (options.orderByField) {
-          q = query(q, orderBy(options.orderByField, options.orderByDirection || 'asc'));
-      }
-      if (options.limit) {
-          q = query(q, limit(options.limit));
-      }
-
-      const querySnapshot = await getDocs(q);
-      const plans = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-      return plans;
-    } catch (e) {
-      console.error("Firebase: Erro ao buscar planos de alimentação:", e);
-      throw new Error("Erro ao buscar planos de alimentação do Firebase.");
-    }
-  };
-
-  // useEffect para carregar pacientes do Firestore
+  // Efeito para "ouvir" o estado de autenticação do Firebase
   useEffect(() => {
-    const getPatients = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await getDocs(patientsCollectionRef);
-        const fetchedPatients = data.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
-        setPatients(fetchedPatients);
-        console.log("App.jsx: Pacientes carregados do Firebase:", fetchedPatients);
-      } catch (e) {
-        console.error("App.jsx: Erro ao carregar pacientes do Firebase:", e);
-        setError("Não foi possível carregar os pacientes do Firebase. Verifique sua conexão ou regras do Firestore.");
-      } finally {
-        setLoading(false);
-        console.log("App.jsx: Carregamento de pacientes do Firebase finalizado.");
-      }
-    };
+    const unsubscribe = onAuthStateChanged(auth, user => {
+      setCurrentUser(user);
+      setAuthLoading(false);
+    });
+    // Limpa o listener ao desmontar o componente para evitar vazamentos de memória
+    return () => unsubscribe();
+  }, []);
 
-    getPatients();
-  }, []); 
-
-
-  // handleAddPatient para usar o Firestore (POST/addDoc)
-  const handleAddPatient = async (newPatientData) => {
+  // Função para buscar os pacientes da subcoleção do usuário logado
+  const fetchPatients = useCallback(async (uid) => {
+    setLoadingData(true);
+    setError(null);
     try {
-      // addDoc automaticamente gera um ID para o documento
-      const docRef = await addDoc(patientsCollectionRef, newPatientData);
-      const addedPatient = { ...newPatientData, id: docRef.id }; // Pega o ID gerado
+      const userPatientsCollectionRef = collection(db, 'users', uid, 'patients');
+      const data = await getDocs(query(userPatientsCollectionRef, orderBy("name")));
+      const fetchedPatients = data.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+      setPatients(fetchedPatients);
+    } catch (e) {
+      console.error("App.jsx: Erro ao carregar pacientes:", e);
+      setError("Não foi possível carregar os pacientes.");
+    } finally {
+      setLoadingData(false);
+    }
+  }, []);
 
-      // Atualiza o estado local com o paciente que inclui o ID do Firestore
-      setPatients(prevPatients => [addedPatient, ...prevPatients]);
-      console.log("App.jsx: Paciente adicionado ao Firebase com ID:", docRef.id);
+  // Efeito para disparar a busca de pacientes quando o usuário muda (login/logout)
+  useEffect(() => {
+    if (currentUser) {
+      fetchPatients(currentUser.uid);
+    } else {
+      setPatients([]); // Limpa a lista de pacientes ao fazer logout
+    }
+  }, [currentUser, fetchPatients]);
 
-      // Adicionar um plano de alimentação inicial vazio para o novo paciente
+  // Função para adicionar um novo paciente
+  const handleAddPatient = async (newPatientData) => {
+    if (!currentUser) return;
+    try {
+      const userPatientsCollectionRef = collection(db, 'users', currentUser.uid, 'patients');
+      const docRef = await addDoc(userPatientsCollectionRef, newPatientData);
+      const addedPatient = { ...newPatientData, id: docRef.id };
+      
+      setPatients(prevPatients => [addedPatient, ...prevPatients].sort((a, b) => a.name.localeCompare(b.name)));
+      
+      // Adiciona um plano inicial para o novo paciente
       const initialFoodPlan = {
-        patientId: addedPatient.id, // Usa o ID gerado pelo Firebase para ligar o plano
+        patientId: addedPatient.id,
         title: `Plano Inicial de ${addedPatient.name}`, 
         startDate: new Date().toISOString().split('T')[0], 
         endDate: '', 
         summary: "Plano a ser preenchido.",
-        totalCalories: 0,
-        proteins: 0,
-        carbs: 0,
-        fats: 0,
-        status: "Rascunho", 
-        duration: "0 dias", 
-        meals: [],
-        observations: "" 
+        totalCalories: 0, proteins: 0, carbs: 0, fats: 0,
+        status: "Rascunho", duration: "0 dias", meals: [], observations: "" 
       };
-
+      const foodPlansCollectionRef = collection(db, 'users', currentUser.uid, 'patients', addedPatient.id, 'foodPlans');
       await addDoc(foodPlansCollectionRef, initialFoodPlan);
-      console.log("App.jsx: Plano inicial adicionado para o paciente:", initialFoodPlan);
-
     } catch (e) {
-      console.error("App.jsx: Erro ao adicionar paciente ou plano inicial ao Firebase:", e);
+      console.error("App.jsx: Erro ao adicionar paciente:", e);
     }
   };
 
-  // handleUpdatePatient para usar o Firestore (PUT/updateDoc)
+  // Função para atualizar um paciente
   const handleUpdatePatient = async (patientId, updatedData) => {
+    if (!currentUser) return;
     try {
-      // Cria uma referência ao documento do paciente usando o ID do documento
-      const patientDocRef = doc(db, "patients", patientId);
-      // updateDoc atualiza os campos existentes ou adiciona novos
+      const patientDocRef = doc(db, 'users', currentUser.uid, 'patients', patientId);
       await updateDoc(patientDocRef, updatedData);
-
-      // Atualiza o estado local. É importante incluir o ID original no objeto atualizado
       setPatients(prevPatients => 
-        prevPatients.map(p => p.id.toString() === patientId ? { ...updatedData, id: patientId } : p)
+        prevPatients.map(p => p.id === patientId ? { ...p, ...updatedData } : p)
       );
-      console.log(`App.jsx: Paciente ${patientId} atualizado no Firebase.`);
     } catch (e) {
-      console.error("App.jsx: Erro ao atualizar paciente no Firebase:", e);
+      console.error("App.jsx: Erro ao atualizar paciente:", e);
     }
   };
 
-  // handleDeletePatient para usar o Firestore (DELETE/deleteDoc)
+  // Função para deletar um paciente e seus sub-dados
   const handleDeletePatient = async (patientId) => {
-    try {
-      console.log(`App.jsx: Iniciando exclusão para paciente ID: ${patientId} no Firebase`);
-      
-      // 1. Buscar e deletar os planos de alimentação do paciente
-      const plansToDelete = await fetchFoodPlansByPatientIdFromFirestore(patientId);
-      console.log(`App.jsx: Planos encontrados para deletar para ${patientId}:`, plansToDelete);
-      for (const plan of plansToDelete) {
-        const planDocRef = doc(db, "foodPlans", plan.id); // Cria referência ao doc do plano
-        await deleteDoc(planDocRef); // Deleta o doc do plano
-        console.log(`App.jsx: Plano ${plan.id} deletado do Firebase.`);
-      }
+    if (!currentUser) return;
+    if (!window.confirm("Tem certeza? Esta ação excluirá o paciente e todos os seus planos alimentares.")) return;
 
-      // 2. Deletar o paciente
-      const patientDocRef = doc(db, "patients", patientId); // Cria referência ao doc do paciente
-      await deleteDoc(patientDocRef); // Deleta o doc do paciente
-      
-      // Atualiza o estado local removendo o paciente
-      setPatients(prevPatients => prevPatients.filter(patient => patient.id.toString() !== patientId));
-      console.log(`App.jsx: Paciente ${patientId} e seus planos deletados do Firebase.`);
+    try {
+      const foodPlansCollectionRef = collection(db, 'users', currentUser.uid, 'patients', patientId, 'foodPlans');
+      const foodPlansSnapshot = await getDocs(foodPlansCollectionRef);
+      const deletePromises = foodPlansSnapshot.docs.map(planDoc => deleteDoc(planDoc.ref));
+      await Promise.all(deletePromises);
+
+      const patientDocRef = doc(db, 'users', currentUser.uid, 'patients', patientId);
+      await deleteDoc(patientDocRef);
+
+      setPatients(prevPatients => prevPatients.filter(p => p.id !== patientId));
     } catch (e) {
-      console.error("App.jsx: Erro ao deletar paciente ou seus planos do Firebase:", e);
+      console.error("App.jsx: Erro ao deletar paciente:", e);
     }
   };
 
-  const noSidebarRoutes = ['/login', '/register', '/forgot-password'];
-  const showSidebar = !noSidebarRoutes.includes(location.pathname) && isLoggedIn;
+  // Função para buscar os planos de um paciente específico
+  const fetchFoodPlansByPatientIdFromFirestore = async (userId, patientId, options = {}) => {
+    try {
+      let q = query(collection(db, 'users', userId, 'patients', patientId, 'foodPlans'));
+      if (options.orderByField) {
+        q = query(q, orderBy(options.orderByField, options.orderByDirection || 'asc'));
+      }
+      if (options.limit) {
+        q = query(q, limit(options.limit));
+      }
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    } catch (e) {
+      console.error("Firebase: Erro ao buscar planos de alimentação:", e);
+      throw e;
+    }
+  };
 
-  if (loading) {
-    return <div className="app-container"><p>Carregando dados iniciais do Firebase...</p></div>;
+  // Define as rotas que não devem exibir a sidebar
+  const noSidebarRoutes = ['/', '/login', '/register', '/forgot-password'];
+  const showSidebar = currentUser && !noSidebarRoutes.includes(location.pathname);
+
+  if (authLoading) {
+    return <div className="app-container"><p>Carregando...</p></div>;
   }
-
+  
   if (error) {
-    return <div className="app-container"><p style={{color: 'red'}}>{error}</p></div>;
+    return <div className="app-container"><p style={{ color: 'red' }}>{error}</p></div>
   }
 
   return (
     <div className="app-container">
-      {showSidebar && <Sidebar setIsLoggedIn={setIsLoggedIn} />}
-
+      {showSidebar && <Sidebar />}
       <main className={showSidebar ? 'app-content' : 'full-content'}>
         <Routes>
-          <Route path="/" element={isLoggedIn ? <HomePage /> : <PreLoginHomePage />} />
-          <Route path="/login" element={<LoginPage setIsLoggedIn={setIsLoggedIn} />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/" element={!currentUser ? <PreLoginHomePage /> : <Navigate to="/home" />} />
+          <Route path="/login" element={!currentUser ? <LoginPage /> : <Navigate to="/home" />} />
+          <Route path="/register" element={!currentUser ? <RegisterPage /> : <Navigate to="/home" />} />
+          <Route path="/forgot-password" element={!currentUser ? <ForgotPasswordPage /> : <Navigate to="/home" />} />
 
-          {isLoggedIn ? (
+          {/* Rotas protegidas que só renderizam se houver um usuário logado */}
+          {currentUser && (
             <>
-              <Route 
-                path="/pacientes" 
-                element={<PacientesPage patients={patients} onPatientAdded={handleAddPatient} />} 
-              />
-              
+              <Route path="/home" element={<HomePage />} />
+              <Route path="/pacientes" element={<PacientesPage user={currentUser} patients={loadingData ? null : patients} onPatientAdded={handleAddPatient} />} />
               <Route 
                 path="/edit-patient/:id" 
-                element={<EditPatientPage patients={patients} setPatients={handleUpdatePatient} onDeletePatient={handleDeletePatient} />} 
+                element={<EditPatientPage user={currentUser} patients={patients} setPatients={handleUpdatePatient} onDeletePatient={handleDeletePatient} />} 
               />
-
               <Route 
                 path="/planos" 
-                element={<PlanosPage patients={patients} fetchFoodPlansByPatientId={fetchFoodPlansByPatientIdFromFirestore} />} 
+                element={<PlanosPage user={currentUser} patients={patients} fetchFoodPlansByPatientId={fetchFoodPlansByPatientIdFromFirestore} />} 
               />
-              
               <Route 
                 path="/planos/:patientId" 
-                // Passa a função de busca de planos para PlanoDetalhePage
-                element={<PlanoDetalhePage fetchFoodPlansByPatientId={fetchFoodPlansByPatientIdFromFirestore} />} 
+                element={<PlanoDetalhePage user={currentUser} fetchFoodPlansByPatientId={fetchFoodPlansByPatientIdFromFirestore} />} 
               />
-
-              <Route path="/anamneses" element={<div>Página de Anamneses</div>} />
-              <Route path="/progressos" element={<div>Página de Progressos</div>} />
-              <Route path="/agendamentos" element={<div>Página de Agendamentos</div>} />
-              <Route path="/feedbacks" element={<div>Página de Feedbacks</div>} />
+              {/* Adicione outras rotas protegidas aqui */}
             </>
-          ) : (
-            <Route path="*" element={<Navigate to="/login" replace />} />
           )}
-
-          <Route path="*" element={<Navigate to="/" replace />} />
+          
+          {/* Redirecionamento para qualquer outra rota não encontrada */}
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>
     </div>
   );
 }
 
+// O App é envolvido pelo Router no main.jsx, então não precisamos do AppWrapper aqui.
 export default App;

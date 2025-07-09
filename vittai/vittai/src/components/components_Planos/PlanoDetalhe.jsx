@@ -4,15 +4,13 @@ import { FaPlus, FaPencilAlt, FaTrashAlt, FaArrowLeft } from 'react-icons/fa';
 import EditPlanModal from './EditPlanModal.jsx'; 
 import './PlanoDetalhe.css'; 
 
-// Importar o 'db' e funções Firestore necessárias
 import { db } from '../../firebase/firebase.js';
-import { collection, getDoc, doc, addDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
+import { collection, getDoc, doc, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 
-
-// ATUALIZADO: Recebe fetchFoodPlansByPatientId como prop
-export default function PlanoDetalhePage({ fetchFoodPlansByPatientId }) {
+export default function PlanoDetalhePage({ user, fetchFoodPlansByPatientId }) {
     const { patientId } = useParams(); 
     const navigate = useNavigate();
+    
     const [patient, setPatient] = useState(null);
     const [foodPlans, setFoodPlans] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -20,133 +18,81 @@ export default function PlanoDetalhePage({ fetchFoodPlansByPatientId }) {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false); 
     const [currentPlanToEdit, setCurrentPlanToEdit] = useState(null); 
 
-    // Referência à coleção de planos (já definida em App, mas útil aqui)
-    const foodPlansCollectionRef = collection(db, "foodPlans");
-
     useEffect(() => {
         const fetchData = async () => {
+            if (!user || !patientId) {
+                setError("Dados do usuário ou paciente indisponíveis.");
+                setLoading(false);
+                return;
+            }
             setLoading(true);
             setError(null);
-            console.log(`PlanoDetalhe.jsx: Iniciando busca de dados para patientId: ${patientId} no Firebase`);
             try {
-                // Buscar dados do paciente pelo ID do Firestore
-                const patientDocRef = doc(db, "patients", patientId);
+                const patientDocRef = doc(db, 'users', user.uid, 'patients', patientId);
                 const patientDocSnap = await getDoc(patientDocRef);
+                if (!patientDocSnap.exists()) throw new Error("Paciente não encontrado.");
+                setPatient({ id: patientDocSnap.id, ...patientDocSnap.data() });
 
-                if (!patientDocSnap.exists()) {
-                    throw new Error(`Paciente com ID ${patientId} não encontrado no Firestore.`);
-                }
-                const patientData = { ...patientDocSnap.data(), id: patientDocSnap.id };
-                setPatient(patientData);
-                console.log("PlanoDetalhe.jsx: Dados do paciente carregados do Firestore:", patientData);
-
-                // Buscar planos de alimentação do paciente usando a prop (Firestore)
-                const plansData = await fetchFoodPlansByPatientId(patientId);
+                const plansData = await fetchFoodPlansByPatientId(user.uid, patientId);
                 setFoodPlans(plansData);
-                console.log("PlanoDetalhe.jsx: Planos do paciente carregados do Firestore:", plansData);
-
             } catch (e) {
-                console.error("PlanoDetalhe.jsx: Erro ao carregar dados do paciente ou planos do Firebase:", e);
-                setError(`Erro: ${e.message}`);
+                console.error("PlanoDetalhe.jsx: Erro ao carregar dados:", e);
+                setError(e.message);
             } finally {
                 setLoading(false);
-                console.log("PlanoDetalhe.jsx: Carregamento de dados do Firebase finalizado.");
             }
         };
-
-        if (patientId) {
-            fetchData();
-        } else {
-            setLoading(false);
-            setError("ID do paciente não fornecido na URL.");
-            console.warn("PlanoDetalhe.jsx: patientId não encontrado na URL.");
-        }
-    }, [patientId, isEditModalOpen, fetchFoodPlansByPatientId]); // Adiciona fetchFoodPlansByPatientId como dependência
+        fetchData();
+    }, [user, patientId, fetchFoodPlansByPatientId]);
 
     const handleAddPlan = async () => {
-        if (!patient) {
-            alert("Aguarde o carregamento dos dados do paciente para adicionar um plano.");
-            return;
-        }
+        if (!user || !patient) return;
         const newPlan = {
-            patientId: patientId, // O ID do paciente Firebase
             title: `Novo Plano para ${patient.name} (${new Date().toLocaleDateString('pt-BR')})`,
             startDate: new Date().toISOString().split('T')[0],
-            endDate: '',
-            summary: 'Detalhes do novo plano...',
-            totalCalories: 0,
-            proteins: 0,
-            carbs: 0,
-            fats: 0,
-            status: "Rascunho",
-            duration: "0 dias",
-            observations: '',
-            meals: []
+            endDate: '', summary: 'Detalhes...', totalCalories: 0, proteins: 0,
+            carbs: 0, fats: 0, status: "Rascunho", duration: "0 dias",
+            observations: '', meals: []
         };
         try {
-            console.log("PlanoDetalhe.jsx: Tentando adicionar novo plano ao Firebase:", newPlan);
+            const foodPlansCollectionRef = collection(db, 'users', user.uid, 'patients', patientId, 'foodPlans');
             const docRef = await addDoc(foodPlansCollectionRef, newPlan);
-            const addedPlan = { ...newPlan, id: docRef.id }; // Pega o ID gerado pelo Firebase
+            const addedPlan = { ...newPlan, id: docRef.id };
             setFoodPlans(prev => [addedPlan, ...prev]);
-            console.log("PlanoDetalhe.jsx: Plano adicionado ao Firebase com sucesso:", addedPlan);
             setCurrentPlanToEdit(addedPlan);
             setIsEditModalOpen(true);
-        } catch (e) {
-            console.error("PlanoDetalhe.jsx: Erro ao adicionar plano ao Firebase:", e);
-            alert("Erro ao adicionar plano. Tente novamente.");
-        }
+        } catch (e) { console.error("Erro ao adicionar plano:", e); }
     };
 
     const handleEditPlan = (plan) => { 
-        console.log("PlanoDetalhe.jsx: Abrindo modal para editar plano:", plan);
         setCurrentPlanToEdit(plan);
         setIsEditModalOpen(true);
     };
 
-    // handleSavePlan para usar o Firestore (PUT/updateDoc)
     const handleSavePlan = async (planId, updatedPlanData) => { 
+        if (!user) return;
         try {
-            console.log(`PlanoDetalhe.jsx: Salvando plano ID: ${planId}, Dados:`, updatedPlanData, "no Firebase");
-            const planDocRef = doc(db, "foodPlans", planId); // Cria referência ao doc do plano
-            await updateDoc(planDocRef, updatedPlanData); // Atualiza o documento
-
-            // Atualiza o estado local para refletir a mudança
+            const planDocRef = doc(db, 'users', user.uid, 'patients', patientId, 'foodPlans', planId);
+            await updateDoc(planDocRef, updatedPlanData);
             setFoodPlans(prev => prev.map(p => p.id === planId ? { ...updatedPlanData, id: planId } : p));
-            console.log("PlanoDetalhe.jsx: Plano salvo no Firebase com sucesso.");
         } catch (e) {
-            console.error("PlanoDetalhe.jsx: Erro ao salvar plano no Firebase:", e);
+            console.error("Erro ao salvar plano:", e);
             throw e; 
         }
     };
 
-    // handleDeletePlan para usar o Firestore (DELETE/deleteDoc)
     const handleDeletePlan = async (planId, planTitle) => {
-        const confirmDelete = window.confirm(`Tem certeza que deseja excluir o plano "${planTitle}"?`);
-        if (confirmDelete) {
-            try {
-                console.log(`PlanoDetalhe.jsx: Tentando excluir plano ID: ${planId} do Firebase`);
-                const planDocRef = doc(db, "foodPlans", planId); // Cria referência ao doc do plano
-                await deleteDoc(planDocRef); // Deleta o documento
-                setFoodPlans(prev => prev.filter(plan => plan.id !== planId));
-                console.log(`PlanoDetalhe.jsx: Plano ${planId} excluído do Firebase com sucesso.`);
-            } catch (e) {
-                console.error("PlanoDetalhe.jsx: Erro ao excluir plano do Firebase:", e);
-                alert("Erro ao excluir plano. Tente novamente.");
-            }
-        }
+        if (!user || !window.confirm(`Tem certeza que deseja excluir o plano "${planTitle}"?`)) return;
+        try {
+            const planDocRef = doc(db, 'users', user.uid, 'patients', patientId, 'foodPlans', planId);
+            await deleteDoc(planDocRef);
+            setFoodPlans(prev => prev.filter(plan => plan.id !== planId));
+        } catch (e) { console.error("Erro ao excluir plano:", e); }
     };
 
-    if (loading) {
-        return <div className="plano-detalhe-container"><p>Carregando dados do paciente e planos do Firebase...</p></div>;
-    }
-
-    if (error) {
-        return <div className="plano-detalhe-container"><p style={{color: 'red'}}>{error}</p></div>;
-    }
-
-    if (!patient) {
-        return <div className="plano-detalhe-container"><p>Paciente não encontrado.</p></div>;
-    }
+    if (loading) return <div className="plano-detalhe-container"><p>Carregando dados...</p></div>;
+    if (error) return <div className="plano-detalhe-container"><p style={{color: 'red'}}>{error}</p></div>;
+    if (!patient) return <div className="plano-detalhe-container"><p>Paciente não encontrado.</p></div>;
 
     return (
         <div className="plano-detalhe-container">
@@ -170,7 +116,7 @@ export default function PlanoDetalhePage({ fetchFoodPlansByPatientId }) {
                         <div key={plan.id} className="plan-card">
                             <div className="plan-card-header">
                                 <h3>{plan.title}</h3>
-                                <span className={`plan-status ${plan.status.toLowerCase().replace(' ', '-')}`}>{plan.status}</span>
+                                <span className={`plan-status ${plan.status?.toLowerCase().replace(' ', '-')}`}>{plan.status}</span>
                             </div>
                             <p><strong>Período:</strong> {plan.startDate} a {plan.endDate || 'Não definido'}</p>
                             <p><strong>Resumo:</strong> {plan.summary}</p>
@@ -181,12 +127,8 @@ export default function PlanoDetalhePage({ fetchFoodPlansByPatientId }) {
                                 <span>Gord: <strong>{plan.fats}g</strong></span>
                             </div>
                             <div className="plan-card-actions">
-                                <button onClick={() => handleEditPlan(plan)} className="edit-plan-btn" title="Editar Plano">
-                                    <FaPencilAlt />
-                                </button>
-                                <button onClick={() => handleDeletePlan(plan.id, plan.title)} className="delete-plan-btn" title="Excluir Plano">
-                                    <FaTrashAlt />
-                                </button>
+                                <button onClick={() => handleEditPlan(plan)} className="edit-plan-btn" title="Editar Plano"><FaPencilAlt /></button>
+                                <button onClick={() => handleDeletePlan(plan.id, plan.title)} className="delete-plan-btn" title="Excluir Plano"><FaTrashAlt /></button>
                             </div>
                         </div>
                     ))
@@ -195,12 +137,13 @@ export default function PlanoDetalhePage({ fetchFoodPlansByPatientId }) {
                 )}
             </div>
 
+            {/* --- CORREÇÃO PRINCIPAL AQUI --- */}
             {isEditModalOpen && currentPlanToEdit && (
                 <EditPlanModal
                     isOpen={isEditModalOpen}
                     onRequestClose={() => {
                         setIsEditModalOpen(false);
-                        setCurrentPlanToEdit(null); 
+                        setCurrentPlanToEdit(null);
                     }}
                     patient={patient}
                     plan={currentPlanToEdit}

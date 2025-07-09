@@ -4,7 +4,7 @@ import PatientCard from '../components_Pacientes/PatientCard.jsx';
 import AddPatientModal from '../components_Pacientes/AddPatientModal.jsx';
 import './Pacientes.css';
 
-export default function PacientesPage({ patients, onPatientAdded, onEditPatient, onDeletePatient }) {
+export default function PacientesPage({ user, patients, onPatientAdded }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -12,7 +12,7 @@ export default function PacientesPage({ patients, onPatientAdded, onEditPatient,
     patient.name.toLowerCase().includes(searchTerm.toLowerCase())
   ) : [];
 
-  if (!patients) {
+  if (patients === null) {
     return (
       <div className="patient-list-container">
         <p>Carregando pacientes...</p>
@@ -21,7 +21,6 @@ export default function PacientesPage({ patients, onPatientAdded, onEditPatient,
   }
 
   return (
-    // O Fragment <> é necessário para agrupar a página e o modal
     <>
       <div className="patient-list-container">
         <header className="patient-list-header">
@@ -36,7 +35,6 @@ export default function PacientesPage({ patients, onPatientAdded, onEditPatient,
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            {/* O botão simplesmente atualiza o estado para abrir o modal */}
             <button onClick={() => setIsModalOpen(true)} className="add-patient-btn">
               <FaPlus /> Adicionar Paciente
             </button>
@@ -49,8 +47,7 @@ export default function PacientesPage({ patients, onPatientAdded, onEditPatient,
               <PatientCard
                 key={patient.id}
                 patient={patient}
-                onEdit={() => onEditPatient(patient)}
-                onDelete={() => onDeletePatient(patient.id)}
+                type="paciente"
               />
             ))
           ) : (
@@ -63,17 +60,11 @@ export default function PacientesPage({ patients, onPatientAdded, onEditPatient,
         </div>
       </div>
 
-      {/*
-        --- CORREÇÃO PRINCIPAL AQUI ---
-        Agora, renderizamos o AddPatientModal incondicionalmente,
-        e passamos o estado 'isModalOpen' para a prop 'isOpen' do modal.
-        A biblioteca 'react-modal' usará essa prop para mostrar ou esconder o modal.
-        Também ajustamos a prop para 'onRequestClose', que é o padrão da biblioteca.
-      */}
       <AddPatientModal
         isOpen={isModalOpen}
         onRequestClose={() => setIsModalOpen(false)}
         onPatientAdded={onPatientAdded}
+        user={user}
       />
     </>
   );
