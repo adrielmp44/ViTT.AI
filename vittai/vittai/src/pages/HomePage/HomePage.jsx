@@ -1,4 +1,3 @@
-// src/pages/HomePage/HomePage.jsx
 import React from 'react';
 import { FaUsers, FaCalendarCheck, FaClock } from 'react-icons/fa';
 import DashboardCard from '../../components/components_HomePage/DashboardCard.jsx'; // AGORA ESTE PATH FUNCIONA SE O ARQUIVO FOI MOVIDO
@@ -10,7 +9,6 @@ import './HomePage.css';
 export default function HomePage() {
   return (
     <div className="homepage-container">
-      {/* Seção dos Cards Superiores */}
       <section className="header-cards">
         <DashboardCard
           title="Total de Pacientes"
@@ -35,13 +33,11 @@ export default function HomePage() {
         />
       </section>
 
-      {/* Seção Principal (Gráfico e Feedbacks) */}
       <section className="main-content-grid">
         <ConsultasChart />
         <FeedbacksList />
       </section>
 
-      {/* Seção Inferior (Agendamentos) */}
       <section className="bottom-content">
         <Agendamentos />
       </section>

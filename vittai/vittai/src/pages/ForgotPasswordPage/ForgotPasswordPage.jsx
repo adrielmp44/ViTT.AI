@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom'; 
-import { auth } from '../../firebase/firebase'; // Importa o auth
-import { sendPasswordResetEmail } from 'firebase/auth'; // Importa a função de redefinição
+import { auth } from '../../firebase/firebase';
+import { sendPasswordResetEmail } from 'firebase/auth'; 
 import './ForgotPasswordPage.css';
 
 export default function ForgotPasswordPage() {

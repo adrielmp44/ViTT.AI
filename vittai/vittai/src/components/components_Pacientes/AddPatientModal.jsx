@@ -43,7 +43,6 @@ export default function AddPatientModal({ isOpen, onRequestClose, onPatientAdded
         setErrors({});
     }, []);
 
-    // --- CORREÇÃO: A FUNÇÃO QUE FALTAVA FOI ADICIONADA AQUI ---
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));

@@ -23,7 +23,6 @@ export default function PlanosPage({ user, patients, fetchFoodPlansByPatientId }
             try {
                 // Mapeia cada paciente e busca as informações do seu último plano
                 const patientsInfoPromises = patients.map(async (patient) => {
-                    // CHAVE DA CORREÇÃO: Chama a função com user.uid e patient.id
                     const plans = await fetchFoodPlansByPatientId(user.uid, patient.id, {
                         orderByField: 'startDate',
                         orderByDirection: 'desc',
@@ -46,7 +45,6 @@ export default function PlanosPage({ user, patients, fetchFoodPlansByPatientId }
         fetchPatientsAndPlanInfo();
     }, [user, patients, fetchFoodPlansByPatientId]);
 
-    // Filtra os pacientes com base na busca do usuário
     const filteredPatients = patientsWithPlanInfo.filter(p =>
         p.name.toLowerCase().includes(searchTerm.toLowerCase())
     );

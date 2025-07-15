@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
-
-// NOTA: Verifique se os caminhos abaixo correspondem à sua estrutura de pastas.
 import Sidebar from './components/components_HomePage/Sidebar';
 import HomePage from './pages/HomePage/HomePage';
 import PreLoginHomePage from './pages/PreLoginHomePage/PreLoginHomePage';
@@ -12,10 +10,7 @@ import PacientesPage from './components/components_Pacientes/Pacientes';
 import EditPatientPage from './components/components_Pacientes/EditarPaciente.jsx'; 
 import PlanosPage from './components/components_Planos/Planos.jsx'; 
 import PlanoDetalhePage from './components/components_Planos/PlanoDetalhe.jsx'; 
-
 import './App.css';
-
-// Importações do Firebase
 import { db, auth } from './firebase/firebase.js';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, limit } from 'firebase/firestore';
@@ -145,7 +140,6 @@ function App() {
     }
   };
 
-  // Define as rotas que não devem exibir a sidebar
   const noSidebarRoutes = ['/', '/login', '/register', '/forgot-password'];
   const showSidebar = currentUser && !noSidebarRoutes.includes(location.pathname);
 
@@ -184,11 +178,9 @@ function App() {
                 path="/planos/:patientId" 
                 element={<PlanoDetalhePage user={currentUser} fetchFoodPlansByPatientId={fetchFoodPlansByPatientIdFromFirestore} />} 
               />
-              {/* Adicione outras rotas protegidas aqui */}
             </>
           )}
           
-          {/* Redirecionamento para qualquer outra rota não encontrada */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>
@@ -196,5 +188,4 @@ function App() {
   );
 }
 
-// O App é envolvido pelo Router no main.jsx, então não precisamos do AppWrapper aqui.
 export default App;

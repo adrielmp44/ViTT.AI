@@ -137,7 +137,6 @@ export default function PlanoDetalhePage({ user, fetchFoodPlansByPatientId }) {
                 )}
             </div>
 
-            {/* --- CORREÇÃO PRINCIPAL AQUI --- */}
             {isEditModalOpen && currentPlanToEdit && (
                 <EditPlanModal
                     isOpen={isEditModalOpen}

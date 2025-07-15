@@ -228,7 +228,6 @@ export default function EditPlanModal({ isOpen, onRequestClose, patient, plan, o
         setFormData(prev => {
             const updatedMeals = [...prev.meals];
             const newFood = {
-                // --- CORREÇÃO DEFINITIVA PARA A KEY DUPLICADA ---
                 id: `food-${Date.now()}-${Math.random()}`,
                 name: '', quantity: 0, unit: 'g',
                 calories: 0, proteins: 0, carbs: 0, fats: 0

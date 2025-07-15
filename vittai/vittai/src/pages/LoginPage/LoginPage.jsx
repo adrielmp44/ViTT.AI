@@ -1,9 +1,7 @@
-// src/pages/LoginPage/LoginPage.jsx
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { auth } from '../../firebase/firebase'; // Importa o auth
-import { signInWithEmailAndPassword } from 'firebase/auth'; // Importa a função de login
+import { auth } from '../../firebase/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth'; 
 import './LoginPage.css';
 
 export default function LoginPage() {

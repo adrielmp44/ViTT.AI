@@ -17,9 +17,7 @@ export default function PreLoginHomePage() {
           <Link to="/register" className="pre-login-button secondary">Cadastrar-se</Link>
         </div>
       </div>
-      {/* REMOVIDO: style={{ backgroundImage: url(${clinicImage}) }} */}
       <div className="pre-login-image">
-        {/* Agora esta div terá seu background definido puramente pelo CSS */}
       </div>
     </div>
   );
