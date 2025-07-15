@@ -2,28 +2,39 @@ import React, { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { FaHome, FaUsers, FaClipboardList, FaFileMedical, FaChartLine, FaCalendarAlt, FaCommentDots, FaCog, FaSignOutAlt } from 'react-icons/fa';
 import { auth } from '../../firebase/firebase';
-import { signOut } from 'firebase/auth';
+// Importação do onAuthStateChanged
+import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import './Sidebar.css';
 
 export default function Sidebar() {
   const navigate = useNavigate();
-  const [userData, setUserData] = useState(null);
-  const user = auth.currentUser;
+  const [user, setUser] = useState(null); // Estado para guardar o usuário autenticado
+  const [userData, setUserData] = useState(null); // Estado para guardar os dados do Firestore
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (user) {
+    // onAuthStateChanged escuta as mudanças de autenticação
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        // Se um usuário estiver logado, atualiza o estado
+        setUser(currentUser);
+        // E busca os dados adicionais no Firestore
         const db = getFirestore();
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setUserData(userDoc.data());
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          setUserData(userDocSnap.data());
         }
+      } else {
+        // Se não houver usuário, limpa os estados
+        setUser(null);
+        setUserData(null);
       }
-    };
+    });
 
-    fetchUserData();
-  }, [user]);
+    // Função de limpeza para remover o "ouvinte" quando o componente for desmontado
+    return () => unsubscribe();
+  }, []); // O array vazio [] garante que o efeito rode apenas uma vez
 
   const handleLogout = async () => {
     if (window.confirm("Tem certeza de que deseja sair?")) {
@@ -59,6 +70,7 @@ export default function Sidebar() {
         </div>
         <div className="user-profile">
           <div className="user-info">
+            {/* Agora usamos o 'user' do estado, que é sempre atualizado */}
             <span className="user-name">{user?.displayName || user?.email || 'Usuário'}</span>
             <span className="user-crn">CRN {userData?.crn || 'Não informado'}</span>
           </div>

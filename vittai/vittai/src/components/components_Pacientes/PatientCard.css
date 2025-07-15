@@ -66,3 +66,33 @@
 .edit-patient-btn:hover {
   background-color: var(--dark-green);
 }
+
+
+.status-tag {
+    padding: 3px 12px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    color: white;
+    text-transform: capitalize;
+    display: inline-block; /* Garante que o padding e o fundo funcionem corretamente */
+}
+
+.status-tag.ativo {
+    background-color: #28a745; /* Verde */
+    color: white;
+}
+
+.status-tag.inativo {
+    background-color: #6c757d; /* Cinza escuro */
+    color: white;
+}
+
+.status-tag.rascunho {
+    background-color: #ffc107; /* Amarelo/Laranja */
+    color: #212529; /* Texto escuro para melhor contraste */
+}
+
+.status-tag.concluído {
+    background-color: #83baf5; /* Azul */
+    color: white;
+}

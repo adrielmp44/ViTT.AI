@@ -129,6 +129,7 @@
 .plan-status.ativo { background-color: #28a745; }
 .plan-status.rascunho { background-color: #ffc107; color: #343a40; }
 .plan-status.inativo { background-color: #6c757d; }
+.plan-status.concluído { background-color: #83baf5; /* Azul */ }
 
 .plan-card p {
     font-size: 0.95rem;

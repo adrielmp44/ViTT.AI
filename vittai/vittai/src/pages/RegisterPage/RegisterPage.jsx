@@ -51,8 +51,10 @@ export default function RegisterPage() {
         createdAt: new Date()
       });
 
-      // 4. Navegar para a página inicial
+      // 4. Navegar para a página inicial e forçar a recarga
       navigate('/home');
+      window.location.reload(); // <-- ADICIONE ESTA LINHA
+
     } catch (err) {
       switch (err.code) {
         case 'auth/email-already-in-use':
@@ -73,6 +75,7 @@ export default function RegisterPage() {
     }
   };
 
+  // ... resto do componente sem alterações
   return (
     <div className="register-page-container">
       <div className="register-card">

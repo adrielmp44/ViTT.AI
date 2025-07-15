@@ -11,25 +11,35 @@ export default function PlanosPage({ user, patients, fetchFoodPlansByPatientId }
 
     useEffect(() => {
         const fetchPatientsAndPlanInfo = async () => {
-            // GUARDA DE SEGURANÇA: Só executa se tivermos o usuário e a lista de pacientes.
-            // Isso previne o erro "indexOf is not a function".
             if (!user || patients.length === 0) {
-                setPatientsWithPlanInfo([]); // Limpa a lista se não houver pacientes
+                setPatientsWithPlanInfo([]);
                 setLoading(false);
                 return;
             }
 
             setLoading(true);
             try {
-                // Mapeia cada paciente e busca as informações do seu último plano
                 const patientsInfoPromises = patients.map(async (patient) => {
-                    const plans = await fetchFoodPlansByPatientId(user.uid, patient.id, {
-                        orderByField: 'startDate',
-                        orderByDirection: 'desc',
-                        limit: 1
+                    const plans = await fetchFoodPlansByPatientId(user.uid, patient.id, {});
+
+                    // Ordenação manual para garantir a ordem correta
+                    plans.sort((a, b) => {
+                        // Primeiro, ordena pela data de início (mais nova primeiro)
+                        const dateComparison = new Date(b.startDate) - new Date(a.startDate);
+                        if (dateComparison !== 0) {
+                            return dateComparison;
+                        }
+                        // Se as datas forem iguais, ordena pelo horário de criação (mais novo primeiro)
+                        // Trata casos onde 'createdAt' pode não existir em planos antigos
+                        const timeA = a.createdAt ? new Date(a.createdAt) : 0;
+                        const timeB = b.createdAt ? new Date(b.createdAt) : 0;
+                        return timeB - timeA;
                     });
-                    // Retorna o paciente com os dados do último plano anexados
-                    return { ...patient, lastPlan: plans[0] || null };
+
+                    const activePlan = plans.find(p => p.status === 'Ativo');
+                    const planToShow = activePlan || plans[0] || null;
+
+                    return { ...patient, lastPlan: planToShow };
                 });
 
                 const results = await Promise.all(patientsInfoPromises);
@@ -72,12 +82,10 @@ export default function PlanosPage({ user, patients, fetchFoodPlansByPatientId }
                 <div className="patient-grid">
                     {filteredPatients.length > 0 ? (
                         filteredPatients.map(patient => (
-                            // O PatientCard agora recebe o objeto de paciente já com os dados do plano
                             <PatientCard
                                 key={patient.id}
                                 patient={{ 
                                     ...patient, 
-                                    // Mapeia os dados do sub-objeto 'lastPlan' para as props que o PatientCard espera
                                     lastPlanTitle: patient.lastPlan?.title,
                                     startDate: patient.lastPlan?.startDate,
                                     status: patient.lastPlan?.status,

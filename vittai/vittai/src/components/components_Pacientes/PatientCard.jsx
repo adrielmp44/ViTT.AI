@@ -40,7 +40,16 @@ export default function PatientCard({ patient, type = 'paciente' }) {
             </div>
             <div>
               <span>Status Plano:</span>
-              <p>{patient.status || 'N/A'}</p>
+              {/* BLOCO MODIFICADO ABAIXO */}
+              {patient.status ? (
+                <p>
+                  <span className={`status-tag ${patient.status.toLowerCase().replace(' ', '-')}`}>
+                    {patient.status}
+                  </span>
+                </p>
+              ) : (
+                <p>N/A</p>
+              )}
             </div>
             <div>
               <span>Kcal/diária:</span>

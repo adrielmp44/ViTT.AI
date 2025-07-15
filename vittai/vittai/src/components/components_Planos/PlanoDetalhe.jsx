@@ -48,6 +48,7 @@ export default function PlanoDetalhePage({ user, fetchFoodPlansByPatientId }) {
     const handleAddPlan = async () => {
         if (!user || !patient) return;
         const newPlan = {
+            createdAt: new Date().toISOString(), // <-- ADICIONADO PARA DESEMPATE
             title: `Novo Plano para ${patient.name} (${new Date().toLocaleDateString('pt-BR')})`,
             startDate: new Date().toISOString().split('T')[0],
             endDate: '', summary: 'Detalhes...', totalCalories: 0, proteins: 0,
@@ -69,15 +70,36 @@ export default function PlanoDetalhePage({ user, fetchFoodPlansByPatientId }) {
         setIsEditModalOpen(true);
     };
 
-    const handleSavePlan = async (planId, updatedPlanData) => { 
+    const handleSavePlan = async (planId, updatedPlanData) => {
         if (!user) return;
         try {
+            if (updatedPlanData.status === 'Ativo') {
+                const otherActivePlan = foodPlans.find(p => p.status === 'Ativo' && p.id !== planId);
+                
+                if (otherActivePlan) {
+                    const otherPlanDocRef = doc(db, 'users', user.uid, 'patients', patientId, 'foodPlans', otherActivePlan.id);
+                    await updateDoc(otherPlanDocRef, { status: 'Inativo' });
+                }
+            }
+    
             const planDocRef = doc(db, 'users', user.uid, 'patients', patientId, 'foodPlans', planId);
             await updateDoc(planDocRef, updatedPlanData);
-            setFoodPlans(prev => prev.map(p => p.id === planId ? { ...updatedPlanData, id: planId } : p));
+    
+            setFoodPlans(prevPlans =>
+                prevPlans.map(p => {
+                    if (p.id === planId) {
+                        return { ...p, ...updatedPlanData };
+                    }
+                    if (updatedPlanData.status === 'Ativo' && p.status === 'Ativo') {
+                        return { ...p, status: 'Inativo' };
+                    }
+                    return p;
+                })
+            );
+    
         } catch (e) {
             console.error("Erro ao salvar plano:", e);
-            throw e; 
+            throw e;
         }
     };
 
